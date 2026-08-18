@@ -1,0 +1,13 @@
+.git
+.github
+.next
+node_modules
+.env
+.env.*
+!.env.example
+.local-postgres
+database-backup
+uploads
+*.log
+*.tsbuildinfo
+
