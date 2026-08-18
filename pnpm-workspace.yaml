@@ -1,2 +1,4 @@
 allowBuilds:
   sharp: true
+overrides:
+  prettier: 3.9.6

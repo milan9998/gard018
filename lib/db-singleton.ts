@@ -19,9 +19,13 @@ function getConnectionString() {
 }
 
 const globalForDb = globalThis as unknown as { gard018Pool?: Pool }
-const pool =
-  globalForDb.gard018Pool ??
-  new Pool({
+let localPool: Pool | undefined
+
+function getPool() {
+  const existingPool = globalForDb.gard018Pool || localPool
+  if (existingPool) return existingPool
+
+  const pool = new Pool({
     connectionString: getConnectionString(),
     max: Number(process.env.DB_POOL_MAX || 10),
     connectionTimeoutMillis: 10_000,
@@ -29,11 +33,15 @@ const pool =
     ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: true } : false,
   })
 
-pool.on("error", (error) => {
-  console.error("[GARD018] Neočekivana PostgreSQL pool greška:", error)
-})
+  pool.on("error", (error) => {
+    console.error("[GARD018] Neočekivana PostgreSQL pool greška:", error)
+  })
 
-if (process.env.NODE_ENV !== "production") globalForDb.gard018Pool = pool
+  if (process.env.NODE_ENV !== "production") globalForDb.gard018Pool = pool
+  else localPool = pool
+
+  return pool
+}
 
 function buildParameterizedQuery(strings: TemplateStringsArray, values: unknown[]) {
   let text = strings[0]
@@ -45,12 +53,12 @@ function buildParameterizedQuery(strings: TemplateStringsArray, values: unknown[
 
 const sql = (async (strings: TemplateStringsArray, ...values: unknown[]) => {
   const query = buildParameterizedQuery(strings, values)
-  const result = await pool.query(query.text, query.values)
+  const result = await getPool().query(query.text, query.values)
   return result.rows
 }) as SqlClient
 
 sql.query = async (query: string, params: unknown[] = []) => {
-  const result = await pool.query(query, params)
+  const result = await getPool().query(query, params)
   return result.rows
 }
 

@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  prettier: 3.9.6
+
 importers:
 
   .:
@@ -223,8 +226,8 @@ importers:
         specifier: ^8.5
         version: 8.5.6
       prettier:
-        specifier: ^3.8.1
-        version: 3.8.1
+        specifier: 3.9.6
+        version: 3.9.6
       tailwindcss:
         specifier: ^4.1.9
         version: 4.1.18
@@ -1997,11 +2000,6 @@ packages:
 
   preact@10.28.2:
     resolution: {integrity: sha512-lbteaWGzGHdlIuiJ0l2Jq454m6kcpI1zNje6d8MlGAFlYvP2GO4ibnat7P74Esfz4sPTdM6UxtTwh/d3pwM9JA==}
-
-  prettier@3.8.1:
-    resolution: {integrity: sha512-UOnG6LftzbdaHZcKoPFtOcCKztrQ57WkHDeRD9t/PTQtmT0NHSeWWepj6pS0z/N7+08BHFDQVUrfmfMRcZwbMg==}
-    engines: {node: '>=14'}
-    hasBin: true
 
   prettier@3.9.6:
     resolution: {integrity: sha512-OpN0zzVdiaiAhxpuuj5efpIS4sY9j7bY6uR5mnj5yPzGkdkjNKSJeUThPb60Jw29QuAZgA4o+/iB49kFiaBX6g==}
@@ -4043,10 +4041,7 @@ snapshots:
 
   preact@10.28.2: {}
 
-  prettier@3.8.1: {}
-
-  prettier@3.9.6:
-    optional: true
+  prettier@3.9.6: {}
 
   pretty-format@3.8.0: {}
 
