@@ -23,6 +23,7 @@ export function LoginForm() {
   const [isResetting, setIsResetting] = useState(false)
   const [isResendingVerification, setIsResendingVerification] = useState(false)
   const [emailNotVerified, setEmailNotVerified] = useState(false)
+  const [canResendVerification, setCanResendVerification] = useState(false)
   const [notice, setNotice] = useState<{ type: "success" | "info" | "error"; text: string } | null>(null)
   const [formData, setFormData] = useState({
     email: "",
@@ -35,10 +36,13 @@ export function LoginForm() {
       setNotice({ type: "success", text: "Email je uspešno potvrđen. Sada možete da se prijavite." })
     } else if (params.get("registered") === "1") {
       setNotice({ type: "info", text: "Registracija je sačuvana. Proverite email i kliknite na dugme za potvrdu naloga." })
+      setCanResendVerification(true)
     } else if (params.get("verification") === "invalid") {
       setNotice({ type: "error", text: "Link za potvrdu nije važeći ili je istekao. Zatražite novi email." })
+      setCanResendVerification(true)
     } else if (params.get("verification") === "error") {
       setNotice({ type: "error", text: "Potvrda trenutno nije uspela. Pokušajte ponovo." })
+      setCanResendVerification(true)
     }
   }, [])
 
@@ -62,10 +66,12 @@ export function LoginForm() {
       const data = await response.json()
 
       if (response.ok) {
+        setCanResendVerification(false)
         window.location.href = data.mustChangePassword ? "/promena-lozinke" : "/"
       } else {
         setError(data.error || "Prijava nije uspela. Pokušajte ponovo.")
         setEmailNotVerified(data.code === "EMAIL_NOT_VERIFIED")
+        setCanResendVerification(data.code === "EMAIL_NOT_VERIFIED")
       }
     } catch (error) {
       console.error("Login error:", error)
@@ -91,6 +97,7 @@ export function LoginForm() {
       if (!response.ok) throw new Error(data.error || "Slanje nije uspelo")
       setError("")
       setEmailNotVerified(false)
+      setCanResendVerification(false)
       setNotice({ type: "info", text: data.message || "Novi verifikacioni email je poslat." })
     } catch (resendError) {
       setError(resendError instanceof Error ? resendError.message : "Slanje nije uspelo")
@@ -148,6 +155,21 @@ export function LoginForm() {
             {notice && (
               <div className={`rounded-lg border p-4 text-sm font-medium ${notice.type === "success" ? "border-green-500/30 bg-green-500/10 text-green-400" : notice.type === "error" ? "border-red-500/30 bg-red-500/10 text-red-400" : "border-primary/30 bg-primary/10 text-foreground"}`} role="status">
                 {notice.text}
+              </div>
+            )}
+            {canResendVerification && !emailNotVerified && (
+              <div className="rounded-lg border border-primary/30 bg-primary/10 p-4 text-sm text-foreground">
+                <p className="mb-3">Niste dobili važeći verifikacioni email?</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isResendingVerification}
+                  onClick={handleResendVerification}
+                  className="w-full border-primary/40 bg-transparent text-foreground hover:bg-primary/10"
+                >
+                  {isResendingVerification ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                  {isResendingVerification ? "Slanje..." : "Pošalji potvrdu ponovo"}
+                </Button>
               </div>
             )}
             {error && (
