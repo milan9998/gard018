@@ -1,4 +1,4 @@
-import { isValidDateOnly } from "@/lib/membership-status";
+import { isValidDateOnly } from "./membership-status.ts";
 
 export function addCalendarMonthToDate(value: string): string | null {
   if (!isValidDateOnly(value)) return null;

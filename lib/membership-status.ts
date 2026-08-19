@@ -20,11 +20,16 @@ export function isValidDateOnly(value: unknown): value is string {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
 }
 
+export function isMembershipDateActive(expiryValue: unknown, today: string) {
+  const expiryDate = dateOnly(expiryValue)
+  return Boolean(expiryDate && expiryDate >= today)
+}
+
 export function getMembershipAccess(expiryValue: unknown) {
   const expiryDate = dateOnly(expiryValue)
   const today = belgradeDateToday()
 
   // Datum isteka je poslednji dan kada član sme da trenira.
-  const allowed = Boolean(expiryDate && expiryDate >= today)
+  const allowed = isMembershipDateActive(expiryDate, today)
   return { allowed, expiryDate, today }
 }
