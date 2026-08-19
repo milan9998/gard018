@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db-singleton"
 import { checkAdminAuth } from "@/lib/auth-helpers"
+import { isProtectedAdmin } from "@/lib/admin-constants"
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -16,7 +17,21 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ID člana je obavezan" }, { status: 400 })
     }
 
-    // Delete member
+    const member = await sql`
+      SELECT email FROM members WHERE id = ${memberId} LIMIT 1
+    `
+
+    if (member.length === 0) {
+      return NextResponse.json({ error: "Član nije pronađen" }, { status: 404 })
+    }
+
+    if (isProtectedAdmin(String(member[0].email))) {
+      return NextResponse.json(
+        { error: "Ovaj nalog je zaštićen trener i ne može biti obrisan" },
+        { status: 403 },
+      )
+    }
+
     await sql`
       DELETE FROM members WHERE id = ${memberId}
     `

@@ -32,11 +32,11 @@ export async function GET() {
       FROM members
       ORDER BY
         CASE
-          WHEN expiry_date >= CURRENT_DATE
+          WHEN expiry_date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Belgrade')::date
             OR (
               individual_training_paid = TRUE
               AND individual_expiry_date IS NOT NULL
-              AND individual_expiry_date >= CURRENT_DATE
+              AND individual_expiry_date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Belgrade')::date
             )
           THEN 0
           ELSE 1

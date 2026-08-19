@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server"
 import { checkAdminAuth } from "@/lib/auth-helpers"
 import { sql } from "@/lib/db-singleton"
-
-function isValidDate(dateString: string): boolean {
-  const date = new Date(dateString)
-  return date instanceof Date && !isNaN(date.getTime())
-}
+import { belgradeDateToday, isValidDateOnly } from "@/lib/membership-status"
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -39,25 +35,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Datum isteka je obavezan" }, { status: 400 })
     }
 
-    if (!isValidDate(expiry_date)) {
+    if (typeof expiry_date !== "string" || !isValidDateOnly(expiry_date)) {
       console.log("[v0] Invalid date format:", expiry_date)
       return NextResponse.json({ error: "Nevažeći datum isteka" }, { status: 400 })
     }
 
-    // Ako je danas 12.01.2026, članarina ističe u 00:00 tog dana (na početku)
-    const expiryDateObj = new Date(expiry_date + "T00:00:00Z")
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    console.log("[v0] Date comparison:", {
-      expiryDate: expiryDateObj.toISOString(),
-      today: today.toISOString(),
-      expiryTime: expiryDateObj.getTime(),
-      todayTime: today.getTime(),
-      comparison: expiryDateObj.getTime() <= today.getTime() ? "expired or expiring today" : "active",
-    })
-
-    const newStatus = expiryDateObj.getTime() > today.getTime() ? "active" : "expired"
+    // Datum isteka je poslednji dan kada član sme da trenira.
+    const today = belgradeDateToday()
+    const newStatus = expiry_date >= today ? "active" : "expired"
 
     console.log("[v0] Calculated new status:", { newStatus, willUpdate: true })
 

@@ -44,11 +44,16 @@ for ($i = 0; $i -lt 60; $i++) {
 }
 if ($LASTEXITCODE -ne 0) { throw "PostgreSQL se nije pokrenuo." }
 
-$tableCount = (& docker compose @compose exec -T postgres psql -U gard018 -d gard018 -Atc "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'").Trim()
-if ($tableCount -eq "0") {
+$membersTable = (& docker compose @compose exec -T postgres psql -U gard018 -d gard018 -Atc "SELECT to_regclass('public.members') IS NOT NULL").Trim()
+$memberCount = if ($membersTable -eq "t") {
+  (& docker compose @compose exec -T postgres psql -U gard018 -d gard018 -Atc "SELECT count(*) FROM public.members").Trim()
+} else {
+  "0"
+}
+if ($membersTable -ne "t" -or $memberCount -eq "0") {
   Write-Host "Ubacujem lokalni backup baze..." -ForegroundColor Cyan
   & docker compose @compose cp $backupPath postgres:/tmp/gard018-production.dump
-  & docker compose @compose exec -T postgres pg_restore --no-owner --no-acl -U gard018 -d gard018 /tmp/gard018-production.dump
+  & docker compose @compose exec -T postgres pg_restore --clean --if-exists --no-owner --no-acl -U gard018 -d gard018 /tmp/gard018-production.dump
 } else {
   Write-Host "Lokalna Docker baza već ima podatke; backup nije ponovo ubačen." -ForegroundColor Yellow
 }

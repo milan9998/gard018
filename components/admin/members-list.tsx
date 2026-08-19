@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { isProtectedAdmin } from "@/lib/admin-constants";
 import {
   Dialog,
   DialogContent,
@@ -577,8 +578,8 @@ export function MembersList({ members }: { members: Member[] }) {
     expiry.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
 
-    // If expiry date is today or in the past, it's expired
-    if (expiry.getTime() <= today.getTime()) {
+    // The expiry date is the last valid day; it becomes expired the next day.
+    if (expiry.getTime() < today.getTime()) {
       return "expired";
     }
 
@@ -732,20 +733,26 @@ export function MembersList({ members }: { members: Member[] }) {
                     )}
                 </div>
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
-                    handleDeleteMember(
-                      member.id,
-                      `${member.first_name} ${member.last_name}`,
-                    )
-                  }
-                  disabled={deletingId === member.id}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </Button>
+                {isProtectedAdmin(member.email) ? (
+                  <span className="rounded-md border border-primary/20 px-2 py-1 text-xs text-muted-foreground">
+                    Zaštićen trener
+                  </span>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      handleDeleteMember(
+                        member.id,
+                        `${member.first_name} ${member.last_name}`,
+                      )
+                    }
+                    disabled={deletingId === member.id}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </Button>
+                )}
               </div>
             </div>
           );

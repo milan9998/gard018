@@ -42,7 +42,8 @@ export async function GET() {
           WHERE b.slot_id = s.id AND b.member_id = ${memberId} AND b.status = 'booked'
           LIMIT 1) AS my_booking_id
       FROM individual_training_slots s
-      WHERE s.starts_at >= CURRENT_TIMESTAMP AND s.status = 'open'
+      WHERE s.starts_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Belgrade')
+        AND s.status = 'open'
       ORDER BY s.starts_at ASC
     `;
 

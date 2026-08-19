@@ -3,6 +3,7 @@ import { checkAdminAuth } from "@/lib/auth-helpers";
 import { sql } from "@/lib/db-singleton";
 import { getSessionUser } from "@/lib/session-helpers";
 import { belgradeDateToday } from "@/lib/membership-status";
+import { isDateWithinInclusivePeriod } from "@/lib/individual-training-access";
 
 export async function GET() {
   const auth = await checkAdminAuth();
@@ -29,7 +30,9 @@ export async function GET() {
       FROM individual_training_bookings b
       JOIN individual_training_slots s ON s.id = b.slot_id
       JOIN members m ON m.id = b.member_id
-      WHERE b.status = 'booked' AND s.starts_at >= CURRENT_TIMESTAMP
+      WHERE b.status = 'booked'
+        AND s.status = 'open'
+        AND s.starts_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Belgrade')
       ORDER BY s.starts_at ASC, m.last_name ASC
     `;
 
@@ -69,7 +72,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Nevažeći termin" }, { status: 400 });
 
     const memberResult = await sql`
-      SELECT id, individual_training_paid, individual_expiry_date
+      SELECT id, individual_training_paid, individual_start_date, individual_expiry_date
       FROM members
       WHERE email = ${user.email}
       LIMIT 1
@@ -83,24 +86,49 @@ export async function POST(request: Request) {
     }
 
     const member = memberResult[0];
-    if (!member.individual_training_paid || !member.individual_expiry_date) {
+    if (
+      !member.individual_training_paid ||
+      !member.individual_start_date ||
+      !member.individual_expiry_date
+    ) {
       return NextResponse.json(
-        { error: "Individualni trening nije aktiviran za vaš nalog" },
+        {
+          error:
+            "Individualni trening nije aktiviran za vaš nalog. Potrebno je da uplatite individualni trening kod admina.",
+        },
         { status: 403 },
       );
     }
 
-    if (
-      String(member.individual_expiry_date).slice(0, 10) < belgradeDateToday()
-    ) {
+    const today = belgradeDateToday();
+    const startDate = String(member.individual_start_date).slice(0, 10);
+    const expiryDate = String(member.individual_expiry_date).slice(0, 10);
+
+    if (today < startDate) {
       return NextResponse.json(
-        { error: "Period individualnog treninga je istekao" },
+        {
+          error: `Period individualnog treninga još nije počeo. Važi od ${startDate.split("-").reverse().join(".")}.`,
+        },
+        { status: 403 },
+      );
+    }
+
+    if (today > expiryDate) {
+      return NextResponse.json(
+        {
+          error:
+            "Period individualnog treninga je istekao. Potrebno je da obnovite uplatu kod admina.",
+        },
         { status: 403 },
       );
     }
 
     const slotResult = await sql`
-      SELECT id, status, starts_at
+      SELECT
+        id,
+        status,
+        starts_at,
+        (starts_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Belgrade')) AS is_future
       FROM individual_training_slots
       WHERE id = ${slotId}
       LIMIT 1
@@ -112,10 +140,26 @@ export async function POST(request: Request) {
       );
     }
 
-    if (new Date(slotResult[0].starts_at).getTime() < Date.now()) {
+    if (!slotResult[0].is_future) {
       return NextResponse.json(
         { error: "Termin je već počeo ili je prošao" },
         { status: 400 },
+      );
+    }
+
+    if (
+      !isDateWithinInclusivePeriod(
+        slotResult[0].starts_at,
+        startDate,
+        expiryDate,
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Ovaj termin nije u vašem aktivnom periodu individualnog treninga.",
+        },
+        { status: 403 },
       );
     }
 
