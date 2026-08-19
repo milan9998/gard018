@@ -28,6 +28,7 @@ type Membership = {
   start_date: string
   expiry_date: string
   status: string
+  membership_configured?: boolean
 }
 
 export function UserNav({ showAdminShortcut = true }: { showAdminShortcut?: boolean }) {
@@ -89,7 +90,7 @@ export function UserNav({ showAdminShortcut = true }: { showAdminShortcut?: bool
   }
 
   const getDaysUntilExpiry = () => {
-    if (!membership || !membership.expiry_date) return null
+    if (!membership || membership.membership_configured === false || !membership.expiry_date) return null
     const today = new Date()
     const expiry = new Date(membership.expiry_date)
     const diffTime = expiry.getTime() - today.getTime()
@@ -205,7 +206,9 @@ export function UserNav({ showAdminShortcut = true }: { showAdminShortcut?: bool
                 <QrCode className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="font-medium text-white">Članarina</p>
-                  {isExpired ? (
+                  {membership.membership_configured === false ? (
+                    <p className="text-zinc-400 font-semibold mt-1">Nije podešena</p>
+                  ) : isExpired ? (
                     <p className="text-red-500 font-semibold mt-1">Istekla!</p>
                   ) : isExpiringSoon ? (
                     <p className="text-yellow-500 font-semibold mt-1">

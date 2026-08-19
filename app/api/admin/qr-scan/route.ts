@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     const members = await sql`
-      SELECT id, first_name, last_name, email, expiry_date
+      SELECT id, first_name, last_name, email, expiry_date, membership_configured
       FROM members
       WHERE qr_code_id = ${qrCodeId}
       LIMIT 1
@@ -37,19 +37,31 @@ export async function POST(request: Request) {
     }
 
     const member = members[0]
-    const access = getMembershipAccess(member.expiry_date)
-    const result = access.allowed ? "active" : "expired"
+    const access = member.membership_configured
+      ? getMembershipAccess(member.expiry_date)
+      : { expiryDate: null, allowed: false }
+    const result = !member.membership_configured
+      ? "membership_not_configured"
+      : access.allowed
+        ? "active"
+        : "expired"
+    const checkInExpiryDate = access.expiryDate ?? member.expiry_date
+    const checkInResult = access.allowed ? "active" : "expired"
 
     const checkIns = await sql`
       INSERT INTO training_check_ins (member_id, scanned_by, allowed, result, membership_expiry)
-      VALUES (${member.id}, ${auth.email}, ${access.allowed}, ${result}, ${access.expiryDate})
+      VALUES (${member.id}, ${auth.email}, ${access.allowed}, ${checkInResult}, ${checkInExpiryDate})
       RETURNING id, scanned_at
     `
 
     return NextResponse.json({
       allowed: access.allowed,
       reason: result,
-      message: access.allowed ? "Član može da trenira" : "Članarina je istekla",
+      message: !member.membership_configured
+        ? "Članarina još nije podešena"
+        : access.allowed
+          ? "Član može da trenira"
+          : "Članarina je istekla",
       checkInId: checkIns[0].id,
       checkedAt: checkIns[0].scanned_at,
       member: {
@@ -58,6 +70,7 @@ export async function POST(request: Request) {
         lastName: member.last_name,
         email: member.email,
         expiryDate: access.expiryDate,
+        membershipConfigured: Boolean(member.membership_configured),
       },
     })
   } catch (error) {

@@ -13,8 +13,9 @@ type QrData = {
     id: number
     firstName: string
     lastName: string
-    expiryDate: string
+    expiryDate: string | null
     allowed: boolean
+    membershipConfigured: boolean
   }
 }
 
@@ -97,9 +98,17 @@ export default function MojQrPage() {
               <div className={`mt-5 rounded-2xl border p-4 ${data.member.allowed ? "border-green-500/40 bg-green-500/10" : "border-red-500/40 bg-red-500/10"}`}>
                 <p className={`flex items-center justify-center gap-2 text-base font-bold ${data.member.allowed ? "text-green-300" : "text-red-300"}`}>
                   {data.member.allowed ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
-                  {data.member.allowed ? "Članarina važi" : "Članarina je istekla"}
+                  {data.member.allowed
+                    ? "Članarina važi"
+                    : data.member.membershipConfigured
+                      ? "Članarina je istekla"
+                      : "Članarina nije podešena"}
                 </p>
-                <p className="mt-1 text-sm text-foreground">Važi do {formatDate(data.member.expiryDate)}</p>
+                <p className="mt-1 text-sm text-foreground">
+                  {data.member.membershipConfigured
+                    ? `Važi do ${formatDate(data.member.expiryDate || "")}`
+                    : "Admin još nije uneo datum važenja članarine."}
+                </p>
               </div>
 
               <p className="mt-4 text-xs leading-relaxed text-muted-foreground">

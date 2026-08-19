@@ -36,6 +36,7 @@ interface Member {
   start_date: string;
   expiry_date: string;
   status: string;
+  membership_configured?: boolean;
   membership_type?: string;
   individual_training_paid?: boolean;
   individual_start_date?: string | null;
@@ -192,6 +193,8 @@ export function MembersList({ members }: { members: Member[] }) {
         return "text-red-500";
       case "notified":
         return "text-yellow-500";
+      case "not-configured":
+        return "text-muted-foreground";
       default:
         return "text-muted-foreground";
     }
@@ -203,9 +206,18 @@ export function MembersList({ members }: { members: Member[] }) {
         return <CheckCircle className="w-5 h-5" />;
       case "expired":
         return <AlertCircle className="w-5 h-5" />;
+      case "not-configured":
+        return <AlertCircle className="w-5 h-5" />;
       default:
         return <AlertCircle className="w-5 h-5" />;
     }
+  };
+
+  const getStatusLabel = (status: string) => {
+    if (status === "active") return "active";
+    if (status === "expired") return "expired";
+    if (status === "not-configured") return "članarina nije podešena";
+    return status;
   };
 
   const isExpiringSoon = (expiryDate: string) => {
@@ -572,7 +584,8 @@ export function MembersList({ members }: { members: Member[] }) {
     }
   };
 
-  const getDisplayStatus = (expiryDate: string): string => {
+  const getDisplayStatus = (expiryDate: string, configured = true): string => {
+    if (!configured) return "not-configured";
     const expiry = new Date(expiryDate);
     const today = new Date();
     expiry.setHours(0, 0, 0, 0);
@@ -622,10 +635,10 @@ export function MembersList({ members }: { members: Member[] }) {
                       {member.first_name} {member.last_name}
                     </h3>
                     <span
-                      className={`flex items-center gap-1 text-sm ${getStatusColor(getDisplayStatus(member.expiry_date))}`}
+                      className={`flex items-center gap-1 text-sm ${getStatusColor(getDisplayStatus(member.expiry_date, member.membership_configured !== false))}`}
                     >
-                      {getStatusIcon(getDisplayStatus(member.expiry_date))}
-                      {getDisplayStatus(member.expiry_date)}
+                      {getStatusIcon(getDisplayStatus(member.expiry_date, member.membership_configured !== false))}
+                      {getStatusLabel(getDisplayStatus(member.expiry_date, member.membership_configured !== false))}
                     </span>
                   </div>
 
@@ -682,16 +695,22 @@ export function MembersList({ members }: { members: Member[] }) {
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
                       <span className="text-muted-foreground">
-                        Истиче:{" "}
-                        <span
-                          className={
-                            isExpiringSoon(member.expiry_date)
-                              ? "text-yellow-500 font-semibold"
-                              : "text-foreground"
-                          }
-                        >
-                          {formatDate(member.expiry_date)}
-                        </span>
+                        {member.membership_configured === false ? (
+                          <span className="text-muted-foreground">Članarina nije podešena</span>
+                        ) : (
+                          <>
+                            Истиче:{" "}
+                            <span
+                              className={
+                                isExpiringSoon(member.expiry_date)
+                                  ? "text-yellow-500 font-semibold"
+                                  : "text-foreground"
+                              }
+                            >
+                              {formatDate(member.expiry_date)}
+                            </span>
+                          </>
+                        )}
                       </span>
                     </div>
                     <Button
@@ -699,11 +718,11 @@ export function MembersList({ members }: { members: Member[] }) {
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => handleOpenEditModal(member)}
-                      title="Izmeni datum isteka"
+                      title={member.membership_configured === false ? "Podesi članarinu" : "Izmeni datum isteka"}
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>
-                    <Button
+                    {member.membership_configured !== false && <Button
                       variant="outline"
                       size="sm"
                       className="h-8 border-primary/30 text-primary hover:bg-primary/10"
@@ -713,15 +732,15 @@ export function MembersList({ members }: { members: Member[] }) {
                     >
                       <Plus className="mr-1.5 h-4 w-4" />
                       {extendingId === member.id ? "Produžujem..." : "Produži"}
-                    </Button>
-                    <Button
+                    </Button>}
+                    {member.membership_configured !== false && <Button
                       variant="outline"
                       size="sm"
                       className="h-8 border-green-500/30 text-green-400 hover:bg-green-500/10"
                       onClick={() => handleOpenRenewal(member)}
                     >
                       Obnova
-                    </Button>
+                    </Button>}
                   </div>
 
                   {isExpiringSoon(member.expiry_date) &&

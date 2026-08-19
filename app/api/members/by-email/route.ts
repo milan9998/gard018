@@ -12,6 +12,7 @@ export async function GET() {
 
     const result = await sql`
       SELECT id, first_name, last_name, email, start_date, expiry_date, status,
+             membership_configured,
              individual_training_paid, individual_start_date, individual_expiry_date
       FROM members
       WHERE email = ${user.email}

@@ -34,10 +34,11 @@ export async function POST(
     }
 
     const result = await sql`
-      UPDATE members
-      SET start_date = ${paidDate},
-          expiry_date = ${expiryDate},
-          status = 'active',
+        UPDATE members
+        SET start_date = ${paidDate},
+            expiry_date = ${expiryDate},
+            membership_configured = TRUE,
+            status = 'active',
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${memberId}
       RETURNING id, first_name, last_name, email, start_date, expiry_date, status

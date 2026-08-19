@@ -19,7 +19,8 @@ type ScanResult = {
     firstName: string
     lastName: string
     email: string
-    expiryDate: string
+    expiryDate: string | null
+    membershipConfigured: boolean
   }
 }
 
@@ -191,10 +192,20 @@ export default function AdminQrSkenerPage() {
               {result.member && (
                 <div className="mt-5 rounded-2xl bg-black/30 px-6 py-4 text-foreground">
                   <p>{result.member.email}</p>
-                  <p className="mt-1 font-bold">Članarina važi do {formatDate(result.member.expiryDate)}</p>
+                  <p className="mt-1 font-bold">
+                    {result.member.membershipConfigured
+                      ? `Članarina važi do ${formatDate(result.member.expiryDate || undefined)}`
+                      : "Članarina nije podešena"}
+                  </p>
                 </div>
               )}
-              {!result.allowed && result.member && <p className="mt-4 text-lg font-semibold text-red-200">Članarina je istekla.</p>}
+              {!result.allowed && result.member && (
+                <p className="mt-4 text-lg font-semibold text-red-200">
+                  {result.member.membershipConfigured
+                    ? "Članarina je istekla."
+                    : "Admin još nije uneo članarinu."}
+                </p>
+              )}
               <Button type="button" onClick={scanNext} className="mt-8 h-14 min-w-64 bg-primary px-8 text-lg font-bold text-primary-foreground">
                 <RotateCcw className="mr-2 h-5 w-5" /> Skeniraj sledećeg
               </Button>

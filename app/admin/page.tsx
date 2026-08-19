@@ -15,6 +15,7 @@ interface Member {
   start_date: string
   expiry_date: string
   status: string
+  membership_configured?: boolean
   membership_type?: string
   individual_training_paid?: boolean
   created_at: string

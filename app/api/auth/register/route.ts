@@ -83,18 +83,16 @@ export async function POST(request: Request) {
 
     if (existingMember.length === 0) {
       const startDate = belgradeDateToday()
-      const [year, month, day] = startDate.split("-").map(Number)
-      const previousDay = new Date(Date.UTC(year, month - 1, day - 1)).toISOString().slice(0, 10)
-
       try {
         await sql`
           INSERT INTO members (
             first_name, last_name, email, start_date, expiry_date,
-            membership_type, status, individual_training_paid, qr_code_id
+            membership_type, status, membership_configured,
+            individual_training_paid, qr_code_id
           )
           VALUES (
-            ${sanitizedFirstName}, ${sanitizedLastName}, ${sanitizedEmail}, ${startDate}, ${previousDay},
-            'MANUAL', 'expired', FALSE, gen_random_uuid()
+            ${sanitizedFirstName}, ${sanitizedLastName}, ${sanitizedEmail}, ${startDate}, ${startDate},
+            'MANUAL', 'active', FALSE, FALSE, gen_random_uuid()
           )
         `
       } catch (memberError) {

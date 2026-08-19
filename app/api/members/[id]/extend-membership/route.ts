@@ -56,6 +56,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     const result = await sql`
       UPDATE members
       SET expiry_date = ${expiryDate},
+          membership_configured = TRUE,
           status = 'active',
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${memberId}

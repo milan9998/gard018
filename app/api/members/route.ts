@@ -28,13 +28,16 @@ export async function GET() {
 
     const members = await sql`
       SELECT id, first_name, last_name, email, start_date, expiry_date, status, membership_type,
+             membership_configured,
              individual_training_paid, individual_start_date, individual_expiry_date, created_at
       FROM members
       ORDER BY
         CASE
-          WHEN expiry_date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Belgrade')::date
+          WHEN membership_configured = TRUE
+            AND expiry_date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Belgrade')::date
             OR (
-              individual_training_paid = TRUE
+              membership_configured = TRUE
+              AND individual_training_paid = TRUE
               AND individual_expiry_date IS NOT NULL
               AND individual_expiry_date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Belgrade')::date
             )
@@ -132,7 +135,7 @@ export async function POST(request: Request) {
     `;
 
     const memberResult = await sql`
-      INSERT INTO members (first_name, last_name, email, start_date, expiry_date, membership_type, status, qr_code_id)
+      INSERT INTO members (first_name, last_name, email, start_date, expiry_date, membership_type, status, membership_configured, qr_code_id)
       VALUES (
         ${sanitizedFirstName}, 
         ${sanitizedLastName}, 
@@ -141,6 +144,7 @@ export async function POST(request: Request) {
         ${finalExpiryDate},
         'MANUAL',
         'active',
+        TRUE,
         gen_random_uuid()
       )
       RETURNING id

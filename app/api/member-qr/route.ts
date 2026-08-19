@@ -11,7 +11,7 @@ export async function GET() {
 
   try {
     const members = await sql`
-      SELECT id, first_name, last_name, email, expiry_date, qr_code_id
+      SELECT id, first_name, last_name, email, expiry_date, membership_configured, qr_code_id
       FROM members
       WHERE email = ${user.email}
       LIMIT 1
@@ -22,7 +22,9 @@ export async function GET() {
     }
 
     const member = members[0]
-    const access = getMembershipAccess(member.expiry_date)
+    const access = member.membership_configured
+      ? getMembershipAccess(member.expiry_date)
+      : { expiryDate: null, allowed: false }
 
     return NextResponse.json({
       qrValue: createMemberQrValue(String(member.qr_code_id)),
@@ -32,6 +34,7 @@ export async function GET() {
         lastName: member.last_name,
         expiryDate: access.expiryDate,
         allowed: access.allowed,
+        membershipConfigured: Boolean(member.membership_configured),
       },
     })
   } catch (error) {

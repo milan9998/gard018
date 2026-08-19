@@ -60,6 +60,7 @@ export async function processMembershipExpirations() {
     const allMembers = await sql`
       SELECT id, first_name, last_name, email, expiry_date, status
       FROM members
+      WHERE membership_configured = TRUE
       ORDER BY expiry_date ASC
     `
 

@@ -49,6 +49,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const result = await sql`
       UPDATE members
       SET expiry_date = ${expiry_date}, 
+          membership_configured = TRUE,
           status = ${newStatus}, 
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${memberId}
