@@ -32,6 +32,22 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
+    const memberEmail = String(member[0].email).trim().toLowerCase()
+
+    // A self-registered member has two records: one in `members` and one in
+    // `users`. Remove the login record as well, otherwise the deleted email
+    // remains blocked from registering again. These tables are intentionally
+    // not linked by a foreign key, so both deletes must be explicit.
+    await sql`
+      DELETE FROM password_reset_tokens
+      WHERE LOWER(email) = ${memberEmail}
+    `
+
+    await sql`
+      DELETE FROM users
+      WHERE LOWER(email) = ${memberEmail}
+    `
+
     await sql`
       DELETE FROM members WHERE id = ${memberId}
     `
