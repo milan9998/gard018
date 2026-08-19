@@ -1,0 +1,12 @@
+services:
+  app:
+    image: gard018-app:local
+    ports:
+      - "3000:3000"
+
+  scheduler:
+    image: gard018-app:local
+
+  caddy:
+    profiles:
+      - production

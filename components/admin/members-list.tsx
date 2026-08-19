@@ -2,9 +2,9 @@
 
 import type React from "react"
 
-import { Calendar, Mail, User, AlertCircle, CheckCircle, Trash2, Pencil, Plus } from "lucide-react"
+import { Calendar, Mail, User, AlertCircle, CheckCircle, Trash2, Pencil, Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import {
   Dialog,
@@ -29,6 +29,7 @@ interface Member {
 }
 
 export function MembersList({ members }: { members: Member[] }) {
+  const [searchTerm, setSearchTerm] = useState("")
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [editingMember, setEditingMember] = useState<Member | null>(null)
   const [newExpiryDate, setNewExpiryDate] = useState<string>("")
@@ -36,6 +37,22 @@ export function MembersList({ members }: { members: Member[] }) {
   const [extendingId, setExtendingId] = useState<number | null>(null)
   const [updatingIndividualId, setUpdatingIndividualId] = useState<number | null>(null)
   const { toast } = useToast()
+
+  const normalizeSearch = (value: string) =>
+    value
+      .toLocaleLowerCase("sr-Latn")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+
+  const filteredMembers = useMemo(() => {
+    const query = normalizeSearch(searchTerm.trim())
+    if (!query) return members
+
+    return members.filter((member) => {
+      const searchableText = normalizeSearch(`${member.first_name} ${member.last_name} ${member.email}`)
+      return searchableText.includes(query)
+    })
+  }, [members, searchTerm])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -398,11 +415,25 @@ export function MembersList({ members }: { members: Member[] }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Чланови</h2>
-        <span className="text-muted-foreground">{members.length} укупно</span>
+        <span className="text-muted-foreground">
+          {filteredMembers.length} од {members.length}
+        </span>
+      </div>
+
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="search"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="Pretraži po imenu, prezimenu ili emailu..."
+          aria-label="Pretraži članove po imenu ili emailu"
+          className="h-11 w-full rounded-lg border border-primary/20 bg-background/50 pl-10 pr-4 text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/30"
+        />
       </div>
 
       <div className="space-y-3">
-        {members.map((member) => {
+        {filteredMembers.map((member) => {
           return (
             <div
               key={member.id}
@@ -502,6 +533,20 @@ export function MembersList({ members }: { members: Member[] }) {
           <div className="text-center py-12 text-muted-foreground">
             <User className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>Нема регистрованих чланова</p>
+          </div>
+        )}
+
+        {members.length > 0 && filteredMembers.length === 0 && (
+          <div className="rounded-lg border border-primary/20 py-12 text-center text-muted-foreground">
+            <Search className="mx-auto mb-4 h-10 w-10 opacity-50" />
+            <p>Nema članova koji odgovaraju pretrazi.</p>
+            <button
+              type="button"
+              onClick={() => setSearchTerm("")}
+              className="mt-3 text-sm text-primary underline-offset-4 hover:underline"
+            >
+              Obriši pretragu
+            </button>
           </div>
         )}
       </div>
