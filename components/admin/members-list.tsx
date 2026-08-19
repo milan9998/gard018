@@ -1,7 +1,5 @@
 "use client";
 
-import type React from "react";
-
 import { useMemo, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import { srLatn } from "date-fns/locale";
@@ -243,109 +241,9 @@ export function MembersList({ members }: { members: Member[] }) {
     return `${targetYear}-${String(targetMonth).padStart(2, "0")}-${String(Math.min(day, lastDay)).padStart(2, "0")}`;
   };
 
-  const parseDateToISO = (ddmmyyyy: string): string | null => {
-    // Ukloni tačke
-    const cleaned = ddmmyyyy.replace(/\./g, "");
-
-    // Pokušaj da parsiraš različite formate
-    let day: string, month: string, year: string;
-
-    if (cleaned.length === 8) {
-      // Format: DDMMYYYY
-      day = cleaned.substring(0, 2);
-      month = cleaned.substring(2, 4);
-      year = cleaned.substring(4, 8);
-    } else if (cleaned.length === 7) {
-      // Format: D.MM.YYYY ili DD.M.YYYY
-      const parts = ddmmyyyy.split(".");
-      if (parts.length === 3) {
-        day = parts[0].padStart(2, "0");
-        month = parts[1].padStart(2, "0");
-        year = parts[2];
-      } else {
-        return null;
-      }
-    } else if (cleaned.length === 6) {
-      // Format: D.M.YYYY
-      const parts = ddmmyyyy.split(".");
-      if (parts.length === 3) {
-        day = parts[0].padStart(2, "0");
-        month = parts[1].padStart(2, "0");
-        year = parts[2];
-      } else {
-        return null;
-      }
-    } else {
-      return null;
-    }
-
-    const dayNum = Number.parseInt(day, 10);
-    const monthNum = Number.parseInt(month, 10);
-    const yearNum = Number.parseInt(year, 10);
-
-    if (
-      dayNum < 1 ||
-      dayNum > 31 ||
-      monthNum < 1 ||
-      monthNum > 12 ||
-      yearNum < 2020
-    ) {
-      return null;
-    }
-
-    return `${year}-${month}-${day}`;
-  };
-
-  const handleDateInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-
-    // Dozvoli samo brojeve i tačke
-    value = value.replace(/[^\d.]/g, "");
-
-    // Maksimalno 10 karaktera (DD.MM.YYYY)
-    if (value.length > 10) {
-      value = value.substring(0, 10);
-    }
-
-    setNewExpiryDate(value);
-  };
-
-  const handleDateBlur = () => {
-    if (!newExpiryDate) return;
-
-    const value = newExpiryDate.replace(/\./g, "");
-
-    // Ako ima tačno 8 cifara, formatiraj automatski
-    if (value.length === 8) {
-      const day = value.substring(0, 2);
-      const month = value.substring(2, 4);
-      const year = value.substring(4, 8);
-      setNewExpiryDate(`${day}.${month}.${year}`);
-      return;
-    }
-
-    // Pokušaj da parsiraj trenutni format
-    const parts = newExpiryDate.split(".");
-    if (parts.length === 3) {
-      let [day, month, year] = parts;
-
-      // Dodaj leading zero
-      if (day && day.length === 1) day = "0" + day;
-      if (month && month.length === 1) month = "0" + month;
-
-      if (day && month && year) {
-        setNewExpiryDate(`${day}.${month}.${year}`);
-      }
-    }
-  };
-
   const handleOpenEditModal = (member: Member) => {
     setEditingMember(member);
-    const date = new Date(member.expiry_date);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    setNewExpiryDate(`${day}.${month}.${year}`);
+    setNewExpiryDate(String(member.expiry_date).slice(0, 10));
   };
 
   const handleUpdateExpiryDate = async () => {
@@ -357,17 +255,16 @@ export function MembersList({ members }: { members: Member[] }) {
       return;
     }
 
-    const expiryDateISO = parseDateToISO(newExpiryDate);
-
-    if (!expiryDateISO) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newExpiryDate)) {
       toast({
         title: "Грешка",
-        description:
-          "Невалидан формат датума. Користите DD.MM.YYYY (нпр. 31.12.2026)",
+        description: "Izaberite važeći datum u kalendaru.",
         variant: "destructive",
       });
       return;
     }
+
+    const expiryDateISO = newExpiryDate;
 
     setIsUpdating(true);
 
@@ -379,7 +276,7 @@ export function MembersList({ members }: { members: Member[] }) {
       memberId: editingMember.id,
       memberName: `${editingMember.first_name} ${editingMember.last_name}`,
       currentExpiryDate: editingMember.expiry_date,
-      newExpiryDateDisplay: newExpiryDate,
+      newExpiryDateDisplay: formatDate(newExpiryDate),
       newExpiryDateISO: expiryDateISO,
       requestData,
       url,
@@ -421,7 +318,7 @@ export function MembersList({ members }: { members: Member[] }) {
         console.log("[v0] ===== UPDATE SUCCESSFUL =====");
         toast({
           title: "Успешно ажурирано",
-          description: `Датум истека за ${editingMember.first_name} ${editingMember.last_name} је успешно ажуриран на ${newExpiryDate}.`,
+          description: `Датум истека за ${editingMember.first_name} ${editingMember.last_name} је успешно ажуриран на ${formatDate(expiryDateISO)}.`,
         });
         setEditingMember(null);
 
@@ -889,35 +786,13 @@ export function MembersList({ members }: { members: Member[] }) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="expiry-date" className="text-sm font-medium">
-                Нови датум истека
-              </label>
-              <p className="text-xs text-muted-foreground">
-                Унесите датум у формату DD.MM.YYYY (нпр. 31.12.2026)
-              </p>
-              <input
-                id="expiry-date"
-                type="text"
-                placeholder="DD.MM.YYYY"
-                value={newExpiryDate}
-                onChange={handleDateInput}
-                onBlur={handleDateBlur}
-                maxLength={10}
-                className="w-full px-3 py-2 border border-input bg-background rounded-md"
-              />
-              {newExpiryDate.length >= 6 && parseDateToISO(newExpiryDate) && (
-                <p className="text-sm font-medium text-green-600">
-                  ✓ Валидан датум
-                </p>
-              )}
-              {newExpiryDate.length >= 6 && !parseDateToISO(newExpiryDate) && (
-                <p className="text-sm font-medium text-red-600">
-                  ✗ Невалидан формат
-                </p>
-              )}
-            </div>
+          <div className="py-4">
+            <DatePickerField
+              id="expiry-date"
+              label="Novi datum isteka"
+              value={newExpiryDate}
+              onChange={setNewExpiryDate}
+            />
           </div>
 
           <DialogFooter>
