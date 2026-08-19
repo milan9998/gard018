@@ -1,7 +1,8 @@
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
-import { UserNav } from "@/components/user-nav"
+import { UserNav } from "@/components/user-nav";
+import { InstallAppButton } from "@/components/install-app-button";
 
 export function UserPageNavigation() {
   return (
@@ -13,7 +14,10 @@ export function UserPageNavigation() {
         <ArrowLeft className="h-4 w-4" />
         Nazad na sajt
       </Link>
-      <UserNav />
+      <div className="flex flex-wrap items-center gap-2">
+        <InstallAppButton compact />
+        <UserNav />
+      </div>
     </div>
-  )
+  );
 }

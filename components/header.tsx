@@ -1,10 +1,11 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { Menu, X } from "lucide-react"
-import { UserNav } from "@/components/user-nav"
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { Menu, X } from "lucide-react";
+import { UserNav } from "@/components/user-nav";
+import { InstallAppButton } from "@/components/install-app-button";
 
 const navLinks = [
   { href: "#pocetna", label: "Početna" },
@@ -13,10 +14,10 @@ const navLinks = [
   { href: "#raspored", label: "Raspored" },
   { href: "#galerija", label: "Galerija" },
   { href: "#kontakt", label: "Kontakt" },
-]
+];
 
 export function Header() {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
@@ -44,11 +45,16 @@ export function Header() {
             ))}
           </nav>
 
-          <div className="hidden lg:block">
+          <div className="hidden items-center gap-3 lg:flex">
+            <InstallAppButton compact />
             <UserNav />
           </div>
 
-          <button className="lg:hidden p-2 text-foreground" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
+          <button
+            className="lg:hidden p-2 text-foreground"
+            onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
+          >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
@@ -67,6 +73,7 @@ export function Header() {
                 </Link>
               ))}
               <div className="mt-4 pt-4 border-t border-border">
+                <InstallAppButton className="mb-4 w-full justify-center" />
                 <UserNav />
               </div>
             </nav>
@@ -74,5 +81,5 @@ export function Header() {
         )}
       </div>
     </header>
-  )
+  );
 }
