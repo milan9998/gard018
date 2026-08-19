@@ -30,7 +30,18 @@ export async function GET() {
       SELECT id, first_name, last_name, email, start_date, expiry_date, status, membership_type,
              individual_training_paid, individual_start_date, individual_expiry_date, created_at
       FROM members
-      ORDER BY expiry_date ASC
+      ORDER BY
+        CASE
+          WHEN expiry_date >= CURRENT_DATE
+            OR (
+              individual_training_paid = TRUE
+              AND individual_expiry_date IS NOT NULL
+              AND individual_expiry_date >= CURRENT_DATE
+            )
+          THEN 0
+          ELSE 1
+        END,
+        id ASC
     `;
     return NextResponse.json(members);
   } catch (error) {
