@@ -2,8 +2,13 @@
 
 import type React from "react";
 
+import { useMemo, useState } from "react";
+import { DayPicker } from "react-day-picker";
+import { srLatn } from "date-fns/locale";
 import {
   Calendar,
+  CalendarDays,
+  ChevronDown,
   Mail,
   User,
   AlertCircle,
@@ -14,7 +19,6 @@ import {
   Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -38,6 +42,110 @@ interface Member {
   individual_start_date?: string | null;
   individual_expiry_date?: string | null;
   created_at: string;
+}
+
+interface DatePickerFieldProps {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  min?: string;
+}
+
+const dateToISO = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+const isoToDate = (value: string) =>
+  value ? new Date(`${value}T00:00:00`) : undefined;
+
+function DatePickerField({
+  id,
+  label,
+  value,
+  onChange,
+  min,
+}: DatePickerFieldProps) {
+  const [open, setOpen] = useState(false);
+  const selectedDate = isoToDate(value);
+  const minimumDate = isoToDate(min || "");
+
+  return (
+    <div className="relative space-y-2">
+      <label htmlFor={id} className="text-sm font-medium">
+        {label}
+      </label>
+      <button
+        id={id}
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen((isOpen) => !isOpen)}
+        className="flex h-11 w-full items-center justify-between rounded-lg border border-primary/25 bg-background px-3 text-left text-foreground outline-none transition hover:border-primary/60 focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
+          <span className={value ? "font-medium" : "text-muted-foreground"}>
+            {selectedDate
+              ? selectedDate.toLocaleDateString("sr-RS", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })
+              : "Izaberi datum"}
+          </span>
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 transition ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="mt-2 w-full rounded-xl border border-primary/25 bg-background p-2 shadow-2xl sm:min-w-[19rem]">
+          <DayPicker
+            mode="single"
+            selected={selectedDate}
+            onSelect={(date) => {
+              if (!date) return;
+              onChange(dateToISO(date));
+              setOpen(false);
+            }}
+            disabled={minimumDate ? { before: minimumDate } : undefined}
+            defaultMonth={selectedDate || minimumDate || new Date()}
+            weekStartsOn={1}
+            locale={srLatn}
+            showOutsideDays
+            fixedWeeks
+            className="mx-auto w-full"
+            classNames={{
+              months: "flex w-full flex-col",
+              month: "w-full space-y-3",
+              month_caption: "relative flex h-9 items-center justify-center",
+              caption_label: "text-sm font-semibold capitalize text-foreground",
+              nav: "flex items-center gap-1",
+              button_previous:
+                "absolute left-0 inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              button_next:
+                "absolute right-0 inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              month_grid: "w-full border-collapse",
+              weekdays: "flex w-full",
+              weekday:
+                "w-full text-center text-[0.68rem] font-semibold uppercase text-muted-foreground",
+              week: "mt-1 flex w-full",
+              day: "relative w-full p-0 text-center",
+              day_button:
+                "mx-auto flex h-9 w-9 items-center justify-center rounded-lg text-sm text-foreground transition hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              selected: "bg-primary text-primary-foreground hover:bg-primary",
+              today: "font-bold ring-1 ring-primary/60 ring-inset",
+              outside: "text-muted-foreground/40",
+              disabled:
+                "cursor-not-allowed text-muted-foreground/25 hover:bg-transparent",
+              hidden: "invisible",
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function MembersList({ members }: { members: Member[] }) {
@@ -772,7 +880,7 @@ export function MembersList({ members }: { members: Member[] }) {
         open={!!editingMember}
         onOpenChange={(open) => !open && setEditingMember(null)}
       >
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Измени datum истека</DialogTitle>
             <DialogDescription>
@@ -834,7 +942,7 @@ export function MembersList({ members }: { members: Member[] }) {
         open={!!renewingMember}
         onOpenChange={(open) => !open && setRenewingMember(null)}
       >
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Obnova članarine</DialogTitle>
             <DialogDescription>
@@ -843,19 +951,12 @@ export function MembersList({ members }: { members: Member[] }) {
               računa važenje do istog datuma sledećeg meseca.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 py-4">
-            <label
-              htmlFor="membership-renewal-date"
-              className="text-sm font-medium"
-            >
-              Datum uplate / početka
-            </label>
-            <input
+          <div className="py-4">
+            <DatePickerField
               id="membership-renewal-date"
-              type="date"
+              label="Datum uplate / početka"
               value={renewalDate}
-              onChange={(event) => setRenewalDate(event.target.value)}
-              className="h-11 w-full rounded-lg border border-primary/25 bg-background px-3 text-foreground outline-none focus:ring-2 focus:ring-primary"
+              onChange={setRenewalDate}
             />
             {renewalDate && (
               <p className="text-sm text-muted-foreground">
@@ -885,7 +986,7 @@ export function MembersList({ members }: { members: Member[] }) {
         open={!!individualMember}
         onOpenChange={(open) => !open && setIndividualMember(null)}
       >
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Individualni trening — period uplate</DialogTitle>
             <DialogDescription>
@@ -894,45 +995,22 @@ export function MembersList({ members }: { members: Member[] }) {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label
-                htmlFor="individual-start-date"
-                className="text-sm font-medium"
-              >
-                Važi od
-              </label>
-              <input
-                id="individual-start-date"
-                type="date"
-                value={individualStartDate}
-                onChange={(event) => {
-                  setIndividualStartDate(event.target.value);
-                  if (event.target.value)
-                    setIndividualExpiryDate(
-                      addCalendarMonth(event.target.value),
-                    );
-                }}
-                className="h-11 w-full rounded-lg border border-primary/25 bg-background px-3 text-foreground outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div className="space-y-2">
-              <label
-                htmlFor="individual-expiry-date"
-                className="text-sm font-medium"
-              >
-                Važi do
-              </label>
-              <input
-                id="individual-expiry-date"
-                type="date"
-                value={individualExpiryDate}
-                min={individualStartDate}
-                onChange={(event) =>
-                  setIndividualExpiryDate(event.target.value)
-                }
-                className="h-11 w-full rounded-lg border border-primary/25 bg-background px-3 text-foreground outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
+            <DatePickerField
+              id="individual-start-date"
+              label="Važi od"
+              value={individualStartDate}
+              onChange={(value) => {
+                setIndividualStartDate(value);
+                if (value) setIndividualExpiryDate(addCalendarMonth(value));
+              }}
+            />
+            <DatePickerField
+              id="individual-expiry-date"
+              label="Važi do"
+              value={individualExpiryDate}
+              min={individualStartDate}
+              onChange={setIndividualExpiryDate}
+            />
           </div>
           <p className="text-xs text-muted-foreground">
             Podrazumevano se bira period od jednog kalendarskog meseca.
