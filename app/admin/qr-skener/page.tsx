@@ -38,6 +38,7 @@ export default function AdminQrSkenerPage() {
   // decodeFromConstraints promise from taking control back after "next scan".
   const cameraGenerationRef = useRef(0)
   const [cameraActive, setCameraActive] = useState(false)
+  const [cameraStarting, setCameraStarting] = useState(false)
   const [checking, setChecking] = useState(false)
   const [cameraError, setCameraError] = useState("")
   const [result, setResult] = useState<ScanResult | null>(null)
@@ -48,6 +49,7 @@ export default function AdminQrSkenerPage() {
     controlsRef.current?.stop()
     controlsRef.current = null
     setCameraActive(false)
+    setCameraStarting(false)
   }
 
   useEffect(() => stopCamera, [])
@@ -81,6 +83,7 @@ export default function AdminQrSkenerPage() {
     controlsRef.current?.stop()
     controlsRef.current = null
     setCameraActive(false)
+    setCameraStarting(true)
     setResult(null)
     setCameraError("")
     scanLockedRef.current = false
@@ -120,10 +123,14 @@ export default function AdminQrSkenerPage() {
       }
       controlsRef.current = controls
       setCameraActive(true)
+      setCameraStarting(false)
     } catch (error) {
       console.error("[GARD018] Camera start failed:", error)
-      setCameraError("Kamera nije dostupna. Dozvoli pristup kameri ili unesi kod ručno.")
-      setCameraActive(false)
+      if (generation === cameraGenerationRef.current) {
+        setCameraError("Kamera nije dostupna. Dozvoli pristup kameri ili unesi kod ručno.")
+        setCameraActive(false)
+        setCameraStarting(false)
+      }
     }
   }
 
@@ -155,7 +162,14 @@ export default function AdminQrSkenerPage() {
               <section className="overflow-hidden rounded-2xl border border-primary/25 bg-card/60">
                 <div className="relative aspect-[3/4] max-h-[68vh] min-h-[360px] bg-black sm:aspect-video">
                   <video ref={videoRef} muted playsInline className="h-full w-full object-cover" />
-                  {!cameraActive && (
+                  {cameraStarting && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/55 px-6 text-center">
+                      <Loader2 className="mb-4 h-14 w-14 animate-spin text-primary" />
+                      <p className="text-lg font-bold text-white">Pokretanje kamere...</p>
+                      <p className="mt-2 max-w-sm text-sm text-zinc-300">Sačekaj trenutak, pripremamo skener.</p>
+                    </div>
+                  )}
+                  {!cameraActive && !cameraStarting && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
                       <Camera className="mb-4 h-14 w-14 text-primary" />
                       <p className="text-lg font-bold text-white">Kamera je spremna za pokretanje</p>
@@ -169,9 +183,13 @@ export default function AdminQrSkenerPage() {
                   )}
                 </div>
                 <div className="p-4 sm:p-5">
-                  <Button type="button" onClick={cameraActive ? stopCamera : startCamera} className="h-12 w-full bg-primary text-base font-bold text-primary-foreground">
-                    <Camera className="mr-2 h-5 w-5" /> {cameraActive ? "Zaustavi kameru" : "Pokreni kameru"}
+                  <Button type="button" disabled={cameraStarting} onClick={cameraActive ? stopCamera : startCamera} className="h-12 w-full bg-primary text-base font-bold text-primary-foreground disabled:opacity-70">
+                    {cameraStarting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Camera className="mr-2 h-5 w-5" />} {cameraStarting ? "Pokretanje kamere..." : cameraActive ? "Zaustavi kameru" : "Pokreni kameru"}
                   </Button>
+                  <p className={`mt-3 flex items-center justify-center gap-2 text-sm font-semibold ${cameraActive ? "text-green-400" : "text-muted-foreground"}`} aria-live="polite">
+                    <span className={`h-2.5 w-2.5 rounded-full ${cameraActive ? "bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.9)]" : "bg-muted-foreground/50"}`} />
+                    {cameraActive ? "Kamera je aktivna — usmeri QR kod u okvir" : cameraStarting ? "Kamera se uključuje..." : "Kamera nije aktivna"}
+                  </p>
                   {cameraError && <p className="mt-3 text-sm font-medium text-red-300" role="alert">{cameraError}</p>}
                 </div>
               </section>
