@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Trash2, Save } from "lucide-react"
+import { Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { UserPageNavigation } from "@/components/user-page-navigation"
@@ -13,7 +13,6 @@ export default function SettingsPage() {
   const [name, setName] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -51,25 +50,6 @@ export default function SettingsPage() {
       alert("Greška pri čuvanju profila")
     }
     setIsSaving(false)
-  }
-
-  const handleDeleteAccount = async () => {
-    if (!showDeleteConfirm) {
-      setShowDeleteConfirm(true)
-      return
-    }
-
-    try {
-      const res = await fetch("/api/profile/delete", { method: "POST" })
-      if (res.ok) {
-        alert("Nalog uspešno obrisan")
-        window.location.href = "/"
-      } else {
-        alert("Greška pri brisanju naloga")
-      }
-    } catch (error) {
-      alert("Greška pri brisanju naloga")
-    }
   }
 
   if (isLoading) {
@@ -122,32 +102,12 @@ export default function SettingsPage() {
             {isSaving ? "Čuvanje..." : "Sačuvaj promene"}
           </Button>
 
-          {/* Delete Account */}
+          {/* Account deletion is intentionally admin-only. */}
           <div className="pt-8 border-t border-primary/20">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Opasna zona</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">Brisanje naloga</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Brisanje naloga je trajno i ne može se opozvati. Svi vaši podaci uključujući članarinu biće obrisani.
+              Članovi i admini ne mogu sami obrisati nalog. Za brisanje se obratite treneru ili ovlašćenom adminu.
             </p>
-            {!showDeleteConfirm ? (
-              <Button
-                onClick={handleDeleteAccount}
-                variant="outline"
-                className="border-red-500 text-red-500 hover:bg-red-500/10 bg-transparent"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Obriši nalog
-              </Button>
-            ) : (
-              <div className="flex gap-3">
-                <Button onClick={handleDeleteAccount} className="bg-red-500 hover:bg-red-600 text-white">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Potvrdi brisanje
-                </Button>
-                <Button onClick={() => setShowDeleteConfirm(false)} variant="outline">
-                  Otkaži
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </div>

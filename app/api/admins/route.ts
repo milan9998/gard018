@@ -1,7 +1,7 @@
 import { checkAdminAuth } from "@/lib/auth-helpers"
 import { NextResponse } from "next/server"
 import { sql } from "@/lib/db-singleton"
-import { isProtectedAdmin } from "@/lib/admin-constants"
+import { canAdminDeleteAccount } from "@/lib/account-deletion-rules"
 
 export async function GET() {
   try {
@@ -62,11 +62,12 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
     }
 
-    if (isProtectedAdmin(String(email))) {
-      return NextResponse.json({ error: "Ovaj admin je zaštićen i ne može biti obrisan." }, { status: 403 })
+    const targetEmail = String(email).trim().toLowerCase()
+    if (!auth.email || !canAdminDeleteAccount(auth.email, targetEmail, true)) {
+      return NextResponse.json({ error: "Admin nalog ne može biti obrisan ovim adminom." }, { status: 403 })
     }
 
-    await sql`DELETE FROM admins WHERE email = ${email}`
+    await sql`DELETE FROM admins WHERE LOWER(email) = LOWER(${targetEmail})`
 
     return NextResponse.json({ success: true })
   } catch (error) {

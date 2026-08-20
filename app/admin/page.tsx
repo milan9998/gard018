@@ -5,6 +5,7 @@ import { MembersList } from "@/components/admin/members-list"
 import { AddMemberForm } from "@/components/admin/add-member-form"
 import { AdminGuard } from "@/components/admin/admin-guard"
 import { AdminNavigation } from "@/components/admin/admin-navigation"
+import { isProtectedAdmin } from "@/lib/admin-constants"
 import { Loader2 } from "lucide-react"
 
 interface Member {
@@ -18,12 +19,14 @@ interface Member {
   membership_configured?: boolean
   membership_type?: string
   individual_training_paid?: boolean
+  is_admin?: boolean
   created_at: string
 }
 
 export default function AdminPage() {
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
+  const [canDeleteAdminAccounts, setCanDeleteAdminAccounts] = useState(false)
 
   const fetchMembers = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true)
@@ -38,6 +41,13 @@ export default function AdminPage() {
     } finally {
       if (showLoading) setLoading(false)
     }
+  }, [])
+
+  useEffect(() => {
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => setCanDeleteAdminAccounts(isProtectedAdmin(data.user?.email || "")))
+      .catch(() => setCanDeleteAdminAccounts(false))
   }, [])
 
   useEffect(() => {
@@ -77,7 +87,11 @@ export default function AdminPage() {
             ) : (
               <div className="flex min-w-0 flex-col gap-8">
                 <AddMemberForm />
-                <MembersList members={members} onMembersChanged={fetchMembers} />
+                <MembersList
+                  members={members}
+                  onMembersChanged={fetchMembers}
+                  canDeleteAdminAccounts={canDeleteAdminAccounts}
+                />
               </div>
             )}
           </div>

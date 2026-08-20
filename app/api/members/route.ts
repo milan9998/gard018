@@ -29,7 +29,10 @@ export async function GET() {
     const members = await sql`
       SELECT id, first_name, last_name, email, start_date, expiry_date, status, membership_type,
              membership_configured,
-             individual_training_paid, individual_start_date, individual_expiry_date, created_at
+             individual_training_paid, individual_start_date, individual_expiry_date, created_at,
+             EXISTS (
+               SELECT 1 FROM admins a WHERE LOWER(a.email) = LOWER(members.email)
+             ) AS is_admin
       FROM members
       ORDER BY
         CASE

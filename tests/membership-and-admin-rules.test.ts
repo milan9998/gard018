@@ -3,6 +3,10 @@ import test from "node:test";
 import { addCalendarMonthToDate } from "../lib/date-only.ts";
 import { isProtectedAdmin } from "../lib/admin-constants.ts";
 import {
+  canAdminDeleteAccount,
+  canSelfDeleteAccount,
+} from "../lib/account-deletion-rules.ts";
+import {
   isMembershipDateActive,
   isValidDateOnly,
 } from "../lib/membership-status.ts";
@@ -33,4 +37,16 @@ test("Ognjenov nalog je zaštićen bez obzira na velika slova ili razmake", () =
   assert.equal(isProtectedAdmin("ognjen.boks19@gmail.com"), true);
   assert.equal(isProtectedAdmin("  OGNJEN.BOKS19@GMAIL.COM "), true);
   assert.equal(isProtectedAdmin("drugi@example.com"), false);
+});
+
+test("nalog se ne može obrisati iz sopstvenog profila", () => {
+  assert.equal(canSelfDeleteAccount(), false);
+});
+
+test("admin briše članove, ali ne admin naloge; Ognjen može druge admine", () => {
+  assert.equal(canAdminDeleteAccount("admin@example.com", "clan@example.com", false), true);
+  assert.equal(canAdminDeleteAccount("admin@example.com", "drugi-admin@example.com", true), false);
+  assert.equal(canAdminDeleteAccount("ognjen.boks19@gmail.com", "drugi-admin@example.com", true), true);
+  assert.equal(canAdminDeleteAccount("ognjen.boks19@gmail.com", "ognjen.boks19@gmail.com", true), false);
+  assert.equal(canAdminDeleteAccount("admin@example.com", "OGNJEN.BOKS19@GMAIL.COM", true), false);
 });

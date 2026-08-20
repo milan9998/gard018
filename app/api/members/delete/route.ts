@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db-singleton"
 import { checkAdminAuth } from "@/lib/auth-helpers"
-import { isProtectedAdmin } from "@/lib/admin-constants"
+import { canAdminDeleteAccount } from "@/lib/account-deletion-rules"
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -25,9 +25,14 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Član nije pronađen" }, { status: 404 })
     }
 
-    if (isProtectedAdmin(String(member[0].email))) {
+    const targetEmail = String(member[0].email)
+    const targetAdmin = await sql`
+      SELECT 1 FROM admins WHERE LOWER(email) = LOWER(${targetEmail}) LIMIT 1
+    `
+
+    if (!canAdminDeleteAccount(auth.email || "", targetEmail, targetAdmin.length > 0)) {
       return NextResponse.json(
-        { error: "Ovaj nalog je zaštićen trener i ne može biti obrisan" },
+        { error: "Ovaj nalog ne može biti obrisan ovim adminom." },
         { status: 403 },
       )
     }
@@ -47,6 +52,9 @@ export async function DELETE(request: NextRequest) {
          WHERE LOWER(email) = LOWER((SELECT email FROM deleted_member))
        ), deleted_user AS (
          DELETE FROM users
+         WHERE LOWER(email) = LOWER((SELECT email FROM deleted_member))
+       ), deleted_admin AS (
+         DELETE FROM admins
          WHERE LOWER(email) = LOWER((SELECT email FROM deleted_member))
        )
        SELECT 1`,

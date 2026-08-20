@@ -164,6 +164,8 @@ export default function ManageAdminsPage() {
                     </div>
                     {protectedAdmin ? (
                       <span className="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">Zaštićen</span>
+                    ) : !isProtectedAdmin(currentUserEmail) ? (
+                      <span className="shrink-0 rounded-full border border-primary/20 px-3 py-1.5 text-xs text-muted-foreground">Samo glavni trener može ukloniti</span>
                     ) : (
                       <Button
                         onClick={() => removeAdmin(admin.email)}
