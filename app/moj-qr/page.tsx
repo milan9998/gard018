@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, Loader2, Maximize2, QrCode, X, XCircle } from "lucide-react"
+import { CheckCircle2, Loader2, QrCode, X, XCircle } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 
 import { UserPageNavigation } from "@/components/user-page-navigation"
+import { calculateFullScreenQrSize } from "@/lib/qr-layout"
 
 type QrData = {
   qrValue: string
@@ -30,6 +31,7 @@ export default function MojQrPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [showFullScreenQr, setShowFullScreenQr] = useState(false)
+  const [fullScreenQrSize, setFullScreenQrSize] = useState(280)
   const hasDataRef = useRef(false)
 
   useEffect(() => {
@@ -74,15 +76,25 @@ export default function MojQrPage() {
   useEffect(() => {
     if (!showFullScreenQr) return
 
+    const updateQrSize = () => {
+      const viewportWidth = window.visualViewport?.width ?? window.innerWidth
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+      setFullScreenQrSize(calculateFullScreenQrSize(viewportWidth, viewportHeight))
+    }
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setShowFullScreenQr(false)
     }
     const previousOverflow = document.body.style.overflow
+    updateQrSize()
     document.body.style.overflow = "hidden"
     document.addEventListener("keydown", closeOnEscape)
+    window.addEventListener("resize", updateQrSize)
+    window.visualViewport?.addEventListener("resize", updateQrSize)
     return () => {
       document.body.style.overflow = previousOverflow
       document.removeEventListener("keydown", closeOnEscape)
+      window.removeEventListener("resize", updateQrSize)
+      window.visualViewport?.removeEventListener("resize", updateQrSize)
     }
   }, [showFullScreenQr])
 
@@ -118,25 +130,23 @@ export default function MojQrPage() {
             <div className="px-5 py-6 text-center sm:px-7">
               <p className="text-xl font-bold text-foreground">{data.member.firstName} {data.member.lastName}</p>
 
-              <div className="mx-auto mt-5 box-border aspect-square w-[min(80vw,300px)] max-w-full overflow-hidden rounded-3xl bg-white p-3 shadow-xl sm:w-[min(70vw,340px)] sm:p-5">
+              <button
+                type="button"
+                onClick={() => setShowFullScreenQr(true)}
+                aria-label="Uvećaj QR kod preko celog ekrana"
+                className="mx-auto mt-5 block aspect-square max-w-full overflow-hidden rounded-3xl bg-white shadow-xl outline-none transition active:scale-[0.98] focus-visible:ring-4 focus-visible:ring-primary"
+                style={{ width: "min(80vw, 42dvh, 320px)" }}
+              >
                 <QRCodeSVG
                   value={data.qrValue}
                   title={`QR kod člana ${data.member.firstName} ${data.member.lastName}`}
                   size={1024}
                   level="H"
+                  marginSize={4}
                   bgColor="#ffffff"
                   fgColor="#000000"
                   className="block h-full w-full"
                 />
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowFullScreenQr(true)}
-                className="mx-auto mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <Maximize2 className="h-4 w-4" />
-                Prikaži QR preko celog ekrana
               </button>
 
               <div className={`mt-5 rounded-2xl border p-4 ${data.member.allowed ? "border-green-500/40 bg-green-500/10" : "border-red-500/40 bg-red-500/10"}`}>
@@ -165,43 +175,35 @@ export default function MojQrPage() {
 
       {showFullScreenQr && data && (
         <div
-          className="fixed inset-0 z-50 flex min-h-dvh items-center justify-center overflow-y-auto bg-black/95 p-4 sm:p-6"
+          className="fixed inset-0 z-50 flex min-h-dvh items-center justify-center overflow-hidden bg-black/95"
           role="dialog"
           aria-modal="true"
           aria-label="QR kod preko celog ekrana"
         >
-          <div className="flex min-h-[calc(100dvh-2rem)] w-full flex-col items-center justify-center gap-4 text-center sm:min-h-[calc(100dvh-3rem)]">
-            <div className="flex w-full max-w-xl items-center justify-between gap-4">
-              <p className="text-left text-lg font-bold text-white">{data.member.firstName} {data.member.lastName}</p>
-              <button
-                type="button"
-                onClick={() => setShowFullScreenQr(false)}
-                aria-label="Zatvori QR prikaz"
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
+          <button
+            type="button"
+            onClick={() => setShowFullScreenQr(false)}
+            aria-label="Zatvori QR prikaz"
+            className="absolute right-3 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/40 bg-black/70 text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:right-5"
+            style={{ top: "max(12px, env(safe-area-inset-top))" }}
+          >
+            <X className="h-6 w-6" />
+          </button>
 
-            <div
-              className="box-border aspect-square max-w-full overflow-hidden rounded-2xl bg-white p-3 shadow-2xl shadow-black sm:p-5"
-              style={{ width: "min(92vw, 78dvh, 440px)" }}
-            >
-              <QRCodeSVG
-                value={data.qrValue}
-                title={`QR kod člana ${data.member.firstName} ${data.member.lastName}`}
-                size={1024}
-                level="H"
-                bgColor="#ffffff"
-                fgColor="#000000"
-                className="block h-full w-full"
-              />
-            </div>
-
-            <p className={`text-lg font-bold ${data.member.allowed ? "text-green-300" : "text-red-300"}`}>
-              {data.member.allowed ? "Članarina važi" : "Članarina nije plaćena"}
-            </p>
-            <p className="max-w-md text-sm text-zinc-300">Drži ovaj ekran otvoren dok trener skenira kod.</p>
+          <div
+            className="aspect-square max-w-full overflow-hidden rounded-2xl bg-white shadow-2xl shadow-black"
+            style={{ width: fullScreenQrSize, height: fullScreenQrSize }}
+          >
+            <QRCodeSVG
+              value={data.qrValue}
+              title={`QR kod člana ${data.member.firstName} ${data.member.lastName}`}
+              size={1024}
+              level="H"
+              marginSize={4}
+              bgColor="#ffffff"
+              fgColor="#000000"
+              className="block h-full w-full"
+            />
           </div>
         </div>
       )}
