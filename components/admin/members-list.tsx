@@ -103,6 +103,9 @@ function DatePickerField({
         <div className="mt-2 w-full rounded-xl border border-primary/25 bg-background p-2 shadow-2xl sm:min-w-[19rem]">
           <DayPicker
             mode="single"
+            captionLayout="dropdown"
+            startMonth={new Date(2000, 0, 1)}
+            endMonth={new Date(2100, 11, 1)}
             selected={selectedDate}
             onSelect={(date) => {
               if (!date) return;
@@ -120,6 +123,9 @@ function DatePickerField({
               months: "flex w-full flex-col",
               month: "w-full space-y-3",
               month_caption: "relative flex h-9 items-center justify-center",
+              dropdowns: "flex items-center justify-center gap-2",
+              dropdown:
+                "rounded-md border border-primary/25 bg-background px-2 py-1 text-sm font-semibold text-foreground outline-none focus:ring-2 focus:ring-primary",
               caption_label: "text-sm font-semibold capitalize text-foreground",
               nav: "flex items-center gap-1",
               button_previous:
@@ -600,7 +606,7 @@ export function MembersList({ members }: { members: Member[] }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Чланови</h2>
         <span className="text-muted-foreground">
@@ -620,18 +626,18 @@ export function MembersList({ members }: { members: Member[] }) {
         />
       </div>
 
-      <div className="space-y-3">
+      <div className="min-w-0 space-y-3">
         {filteredMembers.map((member) => {
           return (
             <div
               key={member.id}
-              className="backdrop-blur-md bg-card/20 border border-primary/20 rounded-lg p-6 hover:border-primary/40 transition-colors"
+              className="min-w-0 overflow-hidden rounded-lg border border-primary/20 bg-card/20 p-4 backdrop-blur-md transition-colors hover:border-primary/40 sm:p-6"
             >
-              <div className="flex items-start justify-between">
-                <div className="space-y-3 flex-1">
-                  <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1 space-y-3">
+                  <div className="flex min-w-0 flex-wrap items-center gap-3">
                     <User className="w-5 h-5 text-primary" />
-                    <h3 className="text-xl font-semibold text-foreground">
+                    <h3 className="min-w-0 break-words text-xl font-semibold text-foreground">
                       {member.first_name} {member.last_name}
                     </h3>
                     <span
@@ -642,13 +648,13 @@ export function MembersList({ members }: { members: Member[] }) {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="flex min-w-0 items-start gap-2 text-muted-foreground">
                     <Mail className="w-4 h-4" />
-                    <span>{member.email}</span>
+                    <span className="min-w-0 break-all">{member.email}</span>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    <label className="inline-flex items-center gap-3 rounded-md border border-primary/20 bg-background/30 px-3 py-2 text-sm text-foreground">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <label className="inline-flex max-w-full items-center gap-3 rounded-md border border-primary/20 bg-background/30 px-3 py-2 text-sm text-foreground">
                       <input
                         type="checkbox"
                         checked={Boolean(member.individual_training_paid)}
@@ -660,7 +666,7 @@ export function MembersList({ members }: { members: Member[] }) {
                         }
                         className="h-4 w-4 accent-primary"
                       />
-                      <span>Individualni trening plaćen</span>
+                      <span className="break-words">Individualni trening plaćen</span>
                       {updatingIndividualId === member.id && (
                         <span className="text-xs text-muted-foreground">
                           Čuvanje...
@@ -753,7 +759,7 @@ export function MembersList({ members }: { members: Member[] }) {
                 </div>
 
                 {isProtectedAdmin(member.email) ? (
-                  <span className="rounded-md border border-primary/20 px-2 py-1 text-xs text-muted-foreground">
+                  <span className="shrink-0 self-end rounded-md border border-primary/20 px-2 py-1 text-xs text-muted-foreground sm:self-start">
                     Zaštićen trener
                   </span>
                 ) : (
@@ -767,7 +773,7 @@ export function MembersList({ members }: { members: Member[] }) {
                       )
                     }
                     disabled={deletingId === member.id}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="shrink-0 self-end text-destructive hover:bg-destructive/10 hover:text-destructive sm:self-start"
                   >
                     <Trash2 className="w-5 h-5" />
                   </Button>

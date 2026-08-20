@@ -50,10 +50,10 @@ export default function AdminPage() {
 
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-background py-12 px-4">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen overflow-x-hidden bg-background px-3 py-6 sm:px-4 sm:py-12">
+        <div className="mx-auto min-w-0 max-w-7xl">
           <AdminNavigation />
-          <div className="backdrop-blur-md bg-card/10 border border-primary/20 rounded-lg p-8">
+          <div className="min-w-0 overflow-hidden rounded-lg border border-primary/20 bg-card/10 p-4 backdrop-blur-md sm:p-8">
             <h1 className="text-4xl font-bold text-foreground mb-2">Admin Panel</h1>
             <p className="text-muted-foreground mb-8">Управљање члановима клуба Gard 018</p>
 
@@ -62,11 +62,11 @@ export default function AdminPage() {
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
               </div>
             ) : (
-              <div className="grid lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
+              <div className="grid min-w-0 gap-8 lg:grid-cols-3">
+                <div className="min-w-0 lg:col-span-2">
                   <MembersList members={members} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <AddMemberForm />
                 </div>
               </div>

@@ -216,6 +216,9 @@ export function AddMemberForm() {
             <div className="mt-2 rounded-xl border border-primary/25 bg-background p-2 shadow-xl">
               <DayPicker
                 mode="single"
+                captionLayout="dropdown"
+                startMonth={new Date(2000, 0, 1)}
+                endMonth={new Date(2100, 11, 1)}
                 selected={selectedDate}
                 onSelect={(date) => {
                   setSelectedDate(date);
@@ -234,6 +237,9 @@ export function AddMemberForm() {
                   month: "w-full space-y-3",
                   month_caption:
                     "relative flex h-9 items-center justify-center",
+                  dropdowns: "flex items-center justify-center gap-2",
+                  dropdown:
+                    "rounded-md border border-primary/25 bg-background px-2 py-1 text-sm font-semibold text-foreground outline-none focus:ring-2 focus:ring-primary",
                   caption_label:
                     "text-sm font-semibold capitalize text-foreground",
                   nav: "flex items-center gap-1",
