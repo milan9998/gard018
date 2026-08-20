@@ -102,7 +102,7 @@ export default function MojQrPage() {
             <div className="px-5 py-6 text-center sm:px-7">
               <p className="text-xl font-bold text-foreground">{data.member.firstName} {data.member.lastName}</p>
 
-              <div className="mx-auto mt-5 aspect-square w-full max-w-[320px] rounded-3xl bg-white p-4 shadow-xl sm:p-5">
+              <div className="mx-auto mt-5 aspect-square w-[min(86vw,360px)] max-w-full rounded-3xl bg-white p-3 shadow-xl sm:p-5">
                 <QRCodeSVG
                   value={data.qrValue}
                   title={`QR kod člana ${data.member.firstName} ${data.member.lastName}`}

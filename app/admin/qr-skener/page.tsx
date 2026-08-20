@@ -153,12 +153,12 @@ export default function AdminQrSkenerPage() {
             </div>
             <h1 className="text-3xl font-bold text-foreground sm:text-4xl">QR skener članarina</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
-              Skeniraj članski QR kod. Zelena potvrda znači da član sme na redovni trening; crvena znači da je članarina istekla.
+              Skeniraj članski QR kod. Zeleni rezultat znači da je članarina plaćena, a crveni da nije plaćena ili nije podešena.
             </p>
           </header>
 
-          {!result && !checking && (
-            <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+          {!checking && (
+            <div className={`${result ? "hidden" : ""} grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]`}>
               <section className="overflow-hidden rounded-2xl border border-primary/25 bg-card/60">
                 <div className="relative aspect-[3/4] max-h-[68vh] min-h-[360px] bg-black sm:aspect-video">
                   <video ref={videoRef} muted playsInline className="h-full w-full object-cover" />
@@ -216,7 +216,7 @@ export default function AdminQrSkenerPage() {
             <section className={`flex min-h-[480px] flex-col items-center justify-center rounded-3xl border-2 px-5 py-10 text-center shadow-2xl ${result.allowed ? "border-green-400 bg-green-500/15 shadow-green-950/50" : "border-red-400 bg-red-500/15 shadow-red-950/50"}`} role="status" aria-live="assertive">
               {result.allowed ? <CheckCircle2 className="h-24 w-24 text-green-400" /> : <XCircle className="h-24 w-24 text-red-400" />}
               <p className={`mt-5 text-3xl font-black sm:text-5xl ${result.allowed ? "text-green-300" : "text-red-300"}`}>
-                {result.allowed ? "MOŽE DA TRENIRA" : "NE MOŽE DA TRENIRA"}
+                {result.allowed ? "ČLANARINA JE PLAĆENA" : "ČLANARINA NIJE PLAĆENA"}
               </p>
               <p className="mt-4 text-xl font-bold text-foreground sm:text-2xl">
                 {result.member ? `${result.member.firstName} ${result.member.lastName}` : result.message}
@@ -230,13 +230,6 @@ export default function AdminQrSkenerPage() {
                       : "Članarina nije podešena"}
                   </p>
                 </div>
-              )}
-              {!result.allowed && result.member && (
-                <p className="mt-4 text-lg font-semibold text-red-200">
-                  {result.member.membershipConfigured
-                    ? "Članarina je istekla."
-                    : "Admin još nije uneo članarinu."}
-                </p>
               )}
               <Button type="button" onClick={scanNext} className="mt-8 h-14 min-w-64 bg-primary px-8 text-lg font-bold text-primary-foreground">
                 <RotateCcw className="mr-2 h-5 w-5" /> Skeniraj sledećeg

@@ -75,13 +75,9 @@ export default function AdminPage() {
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
               </div>
             ) : (
-              <div className="grid min-w-0 gap-8 lg:grid-cols-3">
-                <div className="min-w-0 lg:col-span-2">
-                  <MembersList members={members} onMembersChanged={fetchMembers} />
-                </div>
-                <div className="min-w-0">
-                  <AddMemberForm />
-                </div>
+              <div className="flex min-w-0 flex-col gap-8">
+                <AddMemberForm />
+                <MembersList members={members} onMembersChanged={fetchMembers} />
               </div>
             )}
           </div>
