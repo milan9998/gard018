@@ -113,9 +113,9 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-muted-foreground text-sm">© {new Date().getFullYear()} Gard 018. Sva prava zadržana.</p>
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-end sm:gap-6">
+        <div className="border-t border-border mt-12 pt-8">
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+            <p className="text-muted-foreground text-sm">© {new Date().getFullYear()} Gard 018. Sva prava zadržana.</p>
             <div className="flex gap-6">
               <Link
                 href="/politika-privatnosti"
@@ -130,25 +130,25 @@ export function Footer() {
                 Uslovi korišćenja
               </Link>
             </div>
-            <a
-              href="https://libetech.net/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-              aria-label="Made by LIBETECH"
-            >
-              <Image
-                src="/libetech.png"
-                alt="LIBETECH"
-                width={30}
-                height={30}
-                className="h-7 w-7 object-contain"
-              />
-              <span>
-                Made by <span className="font-semibold text-foreground group-hover:text-primary">LIBETECH</span>
-              </span>
-            </a>
           </div>
+          <a
+            href="https://libetech.net/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group mx-auto mt-7 inline-flex w-full items-center justify-center gap-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Made by LIBETECH"
+          >
+            <Image
+              src="/libetech.png"
+              alt="LIBETECH"
+              width={38}
+              height={38}
+              className="h-9 w-9 object-contain"
+            />
+            <span className="text-base">
+              Made by <span className="font-semibold text-foreground group-hover:text-primary">LIBETECH</span>
+            </span>
+          </a>
         </div>
       </div>
     </footer>
