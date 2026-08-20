@@ -2,6 +2,19 @@ $ErrorActionPreference = "Stop"
 
 Set-Location $PSScriptRoot
 
+if (Get-Command git -ErrorAction SilentlyContinue) {
+  $gitChanges = git status --porcelain
+  if ($gitChanges) {
+    Write-Host "Lokalne Git izmene postoje; preskačem git pull da ih ne bih pregazio." -ForegroundColor Yellow
+  } else {
+    Write-Host "Proveravam najnoviju verziju sa origin/main..." -ForegroundColor Cyan
+    git pull --ff-only origin main
+    if ($LASTEXITCODE -ne 0) {
+      throw "Git nije uspeo da preuzme origin/main. Proveri vezu ili GitHub pristup."
+    }
+  }
+}
+
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
   throw "Docker CLI nije pronađen. Pokreni Docker Desktop i sačekaj da piše Engine running."
 }
@@ -59,7 +72,14 @@ if ($membersTable -ne "t" -or $memberCount -eq "0") {
 }
 
 Write-Host "Gradim i pokrećem aplikaciju..." -ForegroundColor Cyan
-& docker compose @compose up -d --build app scheduler
+& docker compose @compose build --no-cache app
+if ($LASTEXITCODE -ne 0) { throw "Docker build aplikacije nije uspeo." }
+
+& docker compose @compose up -d --force-recreate app scheduler
+if ($LASTEXITCODE -ne 0) { throw "Docker kontejneri aplikacije nisu pokrenuti." }
+
+$commit = if (Get-Command git -ErrorAction SilentlyContinue) { (git rev-parse --short HEAD).Trim() } else { "nepoznat" }
+Write-Host ("Pokrenuta verzija: {0}" -f $commit) -ForegroundColor Green
 
 Write-Host "Provera aplikacije..." -ForegroundColor Cyan
 Start-Sleep -Seconds 5
