@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       )
       VALUES (
         ${sanitizedEmail}, ${passwordHash}, ${sanitizedFirstName}, ${sanitizedLastName}, 'bcrypt',
-        NULL, ${verification.tokenHash}, ${verification.expiresAt.toISOString()}
+        NULL, ${verification.tokenHash}, CURRENT_TIMESTAMP + INTERVAL '24 hours'
       )
       RETURNING id, email, first_name, last_name
     `

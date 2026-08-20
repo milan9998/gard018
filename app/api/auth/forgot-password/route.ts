@@ -56,13 +56,11 @@ export async function POST(req: Request) {
 
     const resetToken = crypto.randomBytes(32).toString("hex")
     const hashedToken = await hashToken(resetToken)
-    const resetTokenExpiry = new Date(Date.now() + 3600000)
-
     await sql`
       UPDATE users 
       SET 
         reset_token = ${hashedToken},
-        reset_token_expiry = ${resetTokenExpiry.toISOString()}
+        reset_token_expiry = CURRENT_TIMESTAMP + INTERVAL '1 hour'
       WHERE id = ${user.id}
     `
 

@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     await sql`
       UPDATE users
       SET email_verification_token_hash = ${verification.tokenHash},
-          email_verification_expires_at = ${verification.expiresAt.toISOString()}
+          email_verification_expires_at = CURRENT_TIMESTAMP + INTERVAL '24 hours'
       WHERE id = ${users[0].id}
     `
 
