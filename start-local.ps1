@@ -37,7 +37,11 @@ if (-not (Test-Path $envPath)) {
 
 $envText = Get-Content -LiteralPath $envPath -Raw
 $envText = [regex]::Replace($envText, "(?m)^APP_IMAGE=.*$", "APP_IMAGE=gard018-app:local")
-$envText = [regex]::Replace($envText, "(?m)^NEXT_PUBLIC_BASE_URL=.*$", "NEXT_PUBLIC_BASE_URL=http://localhost:3000")
+# Keep the URL selected in .env so temporary Cloudflare links can be used for
+# phone/email testing. Fall back to localhost only when the variable is absent.
+if ($envText -notmatch "(?m)^NEXT_PUBLIC_BASE_URL=") {
+  $envText = $envText.TrimEnd() + "`r`nNEXT_PUBLIC_BASE_URL=http://localhost:3000`r`n"
+}
 [System.IO.File]::WriteAllText($envPath, $envText)
 
 if (-not (Test-Path $backupPath)) {
