@@ -276,7 +276,7 @@ export function MembersList({ members }: { members: Member[] }) {
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(newExpiryDate)) {
       toast({
-        title: "Грешка",
+        title: "Greška",
         description: "Izaberite važeći datum u kalendaru.",
         variant: "destructive",
       });
@@ -336,8 +336,8 @@ export function MembersList({ members }: { members: Member[] }) {
       if (response.ok) {
         console.log("[v0] ===== UPDATE SUCCESSFUL =====");
         toast({
-          title: "Успешно ажурирано",
-          description: `Датум истека за ${editingMember.first_name} ${editingMember.last_name} је успешно ажуриран на ${formatDate(expiryDateISO)}.`,
+          title: "Uspešno ažurirano",
+          description: `Datum isteka za ${editingMember.first_name} ${editingMember.last_name} je uspešno ažuriran na ${formatDate(expiryDateISO)}.`,
         });
         setEditingMember(null);
 
@@ -363,7 +363,7 @@ export function MembersList({ members }: { members: Member[] }) {
         stack: error instanceof Error ? error.stack : undefined,
       });
       toast({
-        title: "Grešка",
+        title: "Greška",
         description:
           error instanceof Error
             ? error.message
@@ -608,9 +608,9 @@ export function MembersList({ members }: { members: Member[] }) {
   return (
     <div className="min-w-0 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Чланови</h2>
+        <h2 className="text-2xl font-bold text-foreground">Članovi</h2>
         <span className="text-muted-foreground">
-          {filteredMembers.length} од {members.length}
+          {filteredMembers.length} od {members.length}
         </span>
       </div>
 
@@ -705,7 +705,7 @@ export function MembersList({ members }: { members: Member[] }) {
                           <span className="text-muted-foreground">Članarina nije podešena</span>
                         ) : (
                           <>
-                            Истиче:{" "}
+                            Ističe:{" "}
                             <span
                               className={
                                 isExpiringSoon(member.expiry_date)
@@ -753,7 +753,7 @@ export function MembersList({ members }: { members: Member[] }) {
                     getDisplayStatus(member.expiry_date) === "active" && (
                       <div className="flex items-center gap-2 text-yellow-500 text-sm">
                         <AlertCircle className="w-4 h-4" />
-                        <span>Чланарина ускоро истиче!</span>
+                        <span>Članarina uskoro ističe!</span>
                       </div>
                     )}
                 </div>
@@ -786,7 +786,7 @@ export function MembersList({ members }: { members: Member[] }) {
         {members.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             <User className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Нема регистрованих чланова</p>
+            <p>Nema registrovanih članova</p>
           </div>
         )}
 
@@ -811,9 +811,9 @@ export function MembersList({ members }: { members: Member[] }) {
       >
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Измени datum истека</DialogTitle>
+            <DialogTitle>Izmeni datum isteka</DialogTitle>
             <DialogDescription>
-              Изаберите нови датум истека чланарине за{" "}
+              Izaberite novi datum isteka članarine za{" "}
               {editingMember?.first_name} {editingMember?.last_name}
             </DialogDescription>
           </DialogHeader>
@@ -833,13 +833,13 @@ export function MembersList({ members }: { members: Member[] }) {
               onClick={() => setEditingMember(null)}
               disabled={isUpdating}
             >
-              Откажи
+              Otkaži
             </Button>
             <Button
               onClick={handleUpdateExpiryDate}
               disabled={isUpdating || !newExpiryDate}
             >
-              {isUpdating ? "Чување..." : "Сачувај"}
+              {isUpdating ? "Čuvanje..." : "Sačuvaj"}
             </Button>
           </DialogFooter>
         </DialogContent>

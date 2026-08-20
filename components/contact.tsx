@@ -100,9 +100,9 @@ export function Contact() {
                   <div>
                     <p className="text-foreground font-semibold mb-1">Adresa</p>
                     <p className="text-muted-foreground">
-                      Светозара Милетића 10
+                      Svetozara Miletića 10
                       <br />
-                      18000 Ниш, Србија
+                      18000 Niš, Srbija
                     </p>
                   </div>
                 </div>

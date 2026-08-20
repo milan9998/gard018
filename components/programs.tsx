@@ -163,7 +163,7 @@ export function Programs() {
                 <MapPin className="w-5 h-5 text-primary" />
                 <div>
                   <p className="text-sm text-muted-foreground">Adresa</p>
-                  <p className="text-foreground">Светозара Милетића 10, Ниш 18000</p>
+                  <p className="text-foreground">Svetozara Miletića 10, Niš 18000</p>
                 </div>
               </div>
             </div>

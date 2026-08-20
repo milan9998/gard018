@@ -143,13 +143,13 @@ export function AddMemberForm() {
     <div className="backdrop-blur-md bg-card/20 border border-primary/20 rounded-lg p-6">
       <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
         <UserPlus className="w-6 h-6 text-primary" />
-        Додај члана
+        Dodaj člana
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
-            Име
+            Ime
           </label>
           <input
             type="text"
@@ -162,7 +162,7 @@ export function AddMemberForm() {
 
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
-            Презиме
+            Prezime
           </label>
           <input
             type="text"
@@ -188,7 +188,7 @@ export function AddMemberForm() {
 
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
-            Датум уплате / почетка чланарине
+            Datum uplate / početka članarine
           </label>
           <button
             type="button"
@@ -290,10 +290,10 @@ export function AddMemberForm() {
           {loading ? (
             <span className="flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Додавање...
+              Dodavanje...
             </span>
           ) : (
-            "Додај члана"
+            "Dodaj člana"
           )}
         </Button>
 
@@ -310,7 +310,7 @@ export function AddMemberForm() {
           <Alert className="border-red-500/20 bg-red-500/10">
             <AlertCircle className="h-5 w-5 text-red-500" />
             <AlertDescription className="text-red-500 font-medium">
-              {errorMessage || "Грешка при додавању члана"}
+              {errorMessage || "Greška pri dodavanju člana"}
             </AlertDescription>
           </Alert>
         )}

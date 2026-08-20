@@ -55,7 +55,7 @@ export default function AdminPage() {
           <AdminNavigation />
           <div className="min-w-0 overflow-hidden rounded-lg border border-primary/20 bg-card/10 p-4 backdrop-blur-md sm:p-8">
             <h1 className="text-4xl font-bold text-foreground mb-2">Admin Panel</h1>
-            <p className="text-muted-foreground mb-8">Управљање члановима клуба Gard 018</p>
+            <p className="text-muted-foreground mb-8">Upravljanje članovima kluba Gard 018</p>
 
             {loading ? (
               <div className="flex items-center justify-center py-12">

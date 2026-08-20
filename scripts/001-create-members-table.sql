@@ -16,8 +16,8 @@ CREATE INDEX IF NOT EXISTS idx_members_expiry_date ON members(expiry_date);
 CREATE INDEX IF NOT EXISTS idx_members_status ON members(status);
 
 -- Insert initial member: Stefan Stevanovic
--- Start date: 15.11.2024 (месец дана пре данашњег дана)
--- Expiry date: 15.12.2024 (за тестирање - истекао је данас)
+-- Start date: 15.11.2024 (mesec dana pre današnjeg dana)
+-- Expiry date: 15.12.2024 (za testiranje - istekao je danas)
 INSERT INTO members (first_name, last_name, email, start_date, expiry_date, status)
 VALUES ('Stefan', 'Stevanovic', 'stefkeee2007@gmail.com', '2024-11-15', '2024-12-15', 'active')
 ON CONFLICT (email) DO NOTHING;
