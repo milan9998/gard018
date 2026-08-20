@@ -34,6 +34,9 @@ export default function AdminQrSkenerPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const controlsRef = useRef<IScannerControls | null>(null)
   const scanLockedRef = useRef(false)
+  // Every camera start gets a new generation. This prevents an older
+  // decodeFromConstraints promise from taking control back after "next scan".
+  const cameraGenerationRef = useRef(0)
   const [cameraActive, setCameraActive] = useState(false)
   const [checking, setChecking] = useState(false)
   const [cameraError, setCameraError] = useState("")
@@ -41,6 +44,7 @@ export default function AdminQrSkenerPage() {
   const [manualCode, setManualCode] = useState("")
 
   const stopCamera = () => {
+    cameraGenerationRef.current += 1
     controlsRef.current?.stop()
     controlsRef.current = null
     setCameraActive(false)
@@ -72,7 +76,11 @@ export default function AdminQrSkenerPage() {
   }
 
   const startCamera = async () => {
-    stopCamera()
+    const generation = cameraGenerationRef.current + 1
+    cameraGenerationRef.current = generation
+    controlsRef.current?.stop()
+    controlsRef.current = null
+    setCameraActive(false)
     setResult(null)
     setCameraError("")
     scanLockedRef.current = false
@@ -93,15 +101,20 @@ export default function AdminQrSkenerPage() {
         },
         videoRef.current ?? undefined,
         (decoded, _error, callbackControls) => {
+          if (generation !== cameraGenerationRef.current) {
+            callbackControls.stop()
+            return
+          }
+
           if (decoded) {
             callbackControls.stop()
-            controlsRef.current = null
+            if (controlsRef.current === callbackControls) controlsRef.current = null
             setCameraActive(false)
             void verifyCode(decoded.getText())
           }
         },
       )
-      if (scanLockedRef.current) {
+      if (generation !== cameraGenerationRef.current || scanLockedRef.current) {
         controls.stop()
         return
       }
@@ -115,6 +128,7 @@ export default function AdminQrSkenerPage() {
   }
 
   const scanNext = () => {
+    stopCamera()
     setResult(null)
     setManualCode("")
     scanLockedRef.current = false
