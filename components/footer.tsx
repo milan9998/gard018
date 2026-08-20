@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Instagram, Facebook, Youtube, Phone, Mail, MapPin } from "lucide-react"
 
 export function Footer() {
@@ -114,19 +115,39 @@ export function Footer() {
 
         <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-muted-foreground text-sm">© {new Date().getFullYear()} Gard 018. Sva prava zadržana.</p>
-          <div className="flex gap-6">
-            <Link
-              href="/politika-privatnosti"
-              className="text-muted-foreground hover:text-primary transition-colors text-sm"
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-end sm:gap-6">
+            <div className="flex gap-6">
+              <Link
+                href="/politika-privatnosti"
+                className="text-muted-foreground hover:text-primary transition-colors text-sm"
+              >
+                Politika privatnosti
+              </Link>
+              <Link
+                href="/uslovi-koriscenja"
+                className="text-muted-foreground hover:text-primary transition-colors text-sm"
+              >
+                Uslovi korišćenja
+              </Link>
+            </div>
+            <a
+              href="https://libetech.net/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Made by LIBETECH"
             >
-              Politika privatnosti
-            </Link>
-            <Link
-              href="/uslovi-koriscenja"
-              className="text-muted-foreground hover:text-primary transition-colors text-sm"
-            >
-              Uslovi korišćenja
-            </Link>
+              <Image
+                src="/libetech.png"
+                alt="LIBETECH"
+                width={30}
+                height={30}
+                className="h-7 w-7 object-contain"
+              />
+              <span>
+                Made by <span className="font-semibold text-foreground group-hover:text-primary">LIBETECH</span>
+              </span>
+            </a>
           </div>
         </div>
       </div>
