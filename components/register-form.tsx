@@ -134,12 +134,15 @@ export function RegisterForm() {
   const handleSendResetEmail = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsResetting(true)
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => controller.abort(), 20_000)
 
     try {
       const response = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: resetEmail }),
+        signal: controller.signal,
       })
 
       if (response.ok) {
@@ -162,11 +165,15 @@ export function RegisterForm() {
       console.error("[v0] Forgot password error:", error)
       toast({
         title: "Greška",
-        description: "Greška pri slanju email-a. Pokušajte ponovo.",
+        description:
+          error instanceof DOMException && error.name === "AbortError"
+            ? "Email servis nije odgovorio u roku od 20 sekundi. Pokušajte ponovo."
+            : "Greška pri slanju email-a. Pokušajte ponovo.",
         variant: "destructive",
         duration: 5000,
       })
     } finally {
+      window.clearTimeout(timeoutId)
       setIsResetting(false)
     }
   }

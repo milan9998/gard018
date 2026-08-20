@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     }
 
     try {
-      await sendEmailVerification({ email: sanitizedEmail, firstName: sanitizedFirstName, token: verification.token })
+      await sendEmailVerification({ email: sanitizedEmail, firstName: sanitizedFirstName, token: verification.token, request })
     } catch (emailError) {
       if (existingMember.length === 0) await sql`DELETE FROM members WHERE email = ${sanitizedEmail}`
       await sql`DELETE FROM users WHERE id = ${newUser.id}`

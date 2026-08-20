@@ -40,7 +40,7 @@ $envText = [regex]::Replace($envText, "(?m)^APP_IMAGE=.*$", "APP_IMAGE=gard018-a
 # Keep the URL selected in .env so temporary Cloudflare links can be used for
 # phone/email testing. Fall back to localhost only when the variable is absent.
 if ($envText -notmatch "(?m)^NEXT_PUBLIC_BASE_URL=") {
-  $envText = $envText.TrimEnd() + "`r`nNEXT_PUBLIC_BASE_URL=http://localhost:3000`r`n"
+  $envText = $envText.TrimEnd() + "`r`nNEXT_PUBLIC_BASE_URL=auto`r`n"
 }
 [System.IO.File]::WriteAllText($envPath, $envText)
 

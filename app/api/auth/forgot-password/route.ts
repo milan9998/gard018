@@ -4,6 +4,8 @@ import crypto from "crypto"
 import bcrypt from "bcryptjs"
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit"
 import { sql } from "@/lib/db-singleton"
+import { getPublicBaseUrl } from "@/lib/public-url"
+import { OperationTimeoutError, withTimeout } from "@/lib/async-utils"
 
 const forgotPasswordLimiter = rateLimit({
   limit: 3,
@@ -76,10 +78,10 @@ export async function POST(req: Request) {
 
     const resend = new Resend(apiKey)
 
-    const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000").replace(/\/+$/, "")
+    const baseUrl = getPublicBaseUrl(req)
     const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`
 
-    const emailResult = await resend.emails.send({
+    const emailResult = await withTimeout(resend.emails.send({
       from: "GARD 018 <info@gard018.com>",
       to: email,
       subject: "Resetovanje lozinke - GARD 018",
@@ -125,7 +127,7 @@ export async function POST(req: Request) {
           </body>
         </html>
       `,
-    })
+    }), 15_000, "Resend nije odgovorio u predviđenom roku")
 
     if (emailResult.error) {
       console.error("[GARD018] Email sending failed:", emailResult.error.message)
@@ -137,6 +139,12 @@ export async function POST(req: Request) {
       message: "Link za resetovanje lozinke je poslat na vašu email adresu",
     })
   } catch (error) {
+    if (error instanceof OperationTimeoutError) {
+      return NextResponse.json(
+        { error: "Email servis trenutno ne odgovara. Pokušajte ponovo za nekoliko sekundi." },
+        { status: 504 },
+      )
+    }
     console.error("[GARD018] Unexpected error in forgot-password:", error)
     return NextResponse.json({ error: "Neočekivana greška na serveru" }, { status: 500 })
   }

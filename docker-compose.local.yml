@@ -4,9 +4,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Keep localhost as the default, but allow a temporary public tunnel URL
-      # for phone/email testing without changing the production compose file.
-      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-http://localhost:3000}
+      # Resolve links from the incoming host so localhost, Quick Tunnel and
+      # test domains all work without rebuilding the configuration by hand.
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-auto}
 
   scheduler:
     image: gard018-app:local

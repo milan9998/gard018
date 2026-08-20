@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       WHERE id = ${users[0].id}
     `
 
-    await sendEmailVerification({ email: users[0].email, firstName: users[0].first_name || "člane", token: verification.token })
+    await sendEmailVerification({ email: users[0].email, firstName: users[0].first_name || "člane", token: verification.token, request })
     return NextResponse.json({ success: true, message: "Novi verifikacioni email je poslat." })
   } catch (error) {
     console.error("[GARD018] Verification resend failed:", error)

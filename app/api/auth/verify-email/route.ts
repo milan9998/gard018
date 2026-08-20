@@ -2,11 +2,12 @@ import { NextResponse } from "next/server"
 
 import { sql } from "@/lib/db-singleton"
 import { hashEmailVerificationToken } from "@/lib/email-verification"
+import { getPublicBaseUrl } from "@/lib/public-url"
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const token = url.searchParams.get("token")?.trim()
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || url.origin).replace(/\/+$/, "")
+  const baseUrl = getPublicBaseUrl(request)
 
   if (!token) return NextResponse.redirect(`${baseUrl}/prijava?verification=invalid`)
 
