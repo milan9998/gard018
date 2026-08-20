@@ -158,7 +158,10 @@ export default function AdminQrSkenerPage() {
           </header>
 
           {!checking && (
-            <div className={`${result ? "hidden" : ""} grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]`}>
+            <div
+              className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]"
+              style={{ display: result ? "none" : "grid" }}
+            >
               <section className="overflow-hidden rounded-2xl border border-primary/25 bg-card/60">
                 <div className="relative aspect-[3/4] max-h-[68vh] min-h-[360px] bg-black sm:aspect-video">
                   <video ref={videoRef} muted playsInline className="h-full w-full object-cover" />
