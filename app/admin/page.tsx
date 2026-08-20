@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { MembersList } from "@/components/admin/members-list"
 import { AddMemberForm } from "@/components/admin/add-member-form"
 import { AdminGuard } from "@/components/admin/admin-guard"
@@ -25,13 +25,10 @@ export default function AdminPage() {
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchMembers()
-  }, [])
-
-  async function fetchMembers() {
+  const fetchMembers = useCallback(async (showLoading = false) => {
+    if (showLoading) setLoading(true)
     try {
-      const response = await fetch("/api/members")
+      const response = await fetch("/api/members", { cache: "no-store" })
       if (response.ok) {
         const data = await response.json()
         setMembers(data)
@@ -39,14 +36,30 @@ export default function AdminPage() {
     } catch (error) {
       console.error("[v0] Error fetching members:", error)
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    void fetchMembers(true)
+    const refresh = () => {
+      if (document.visibilityState === "visible") void fetchMembers()
+    }
+    const interval = window.setInterval(refresh, 10000)
+    document.addEventListener("visibilitychange", refresh)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", refresh)
+    }
+  }, [fetchMembers])
 
   // Expose refresh function for form to use
   useEffect(() => {
-    ;(window as any).refreshMembers = fetchMembers
-  }, [])
+    ;(window as any).refreshMembers = () => fetchMembers()
+    return () => {
+      delete (window as any).refreshMembers
+    }
+  }, [fetchMembers])
 
   return (
     <AdminGuard>
@@ -64,7 +77,7 @@ export default function AdminPage() {
             ) : (
               <div className="grid min-w-0 gap-8 lg:grid-cols-3">
                 <div className="min-w-0 lg:col-span-2">
-                  <MembersList members={members} />
+                  <MembersList members={members} onMembersChanged={fetchMembers} />
                 </div>
                 <div className="min-w-0">
                   <AddMemberForm />

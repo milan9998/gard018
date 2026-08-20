@@ -39,11 +39,13 @@ export function UserNav({ showAdminShortcut = true }: { showAdminShortcut?: bool
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const fetchSessionData = async () => {
+    let active = true
+    const fetchSessionData = async (showLoading = false) => {
+      if (showLoading) setIsLoading(true)
       try {
         console.log("[v0] Fetching session data...")
 
-        const sessionResponse = await fetch("/api/auth/session")
+        const sessionResponse = await fetch("/api/auth/session", { cache: "no-store" })
         console.log("[v0] Session response status:", sessionResponse.status)
         console.log("[v0] Session response Content-Type:", sessionResponse.headers.get("Content-Type"))
 
@@ -51,7 +53,7 @@ export function UserNav({ showAdminShortcut = true }: { showAdminShortcut?: bool
         const contentType = sessionResponse.headers.get("Content-Type")
         if (!contentType || !contentType.includes("application/json")) {
           console.error("[v0] Session endpoint returned non-JSON response")
-          setIsLoading(false)
+          if (showLoading) setIsLoading(false)
           return
         }
 
@@ -67,20 +69,34 @@ export function UserNav({ showAdminShortcut = true }: { showAdminShortcut?: bool
             .catch(() => ({ membership: null })),
         ])
 
-        setUser(sessionData.user || null)
-        setIsAdmin(adminData.isAdmin || false)
-        setMembership(membershipData.membership || null)
-        setIsLoading(false)
+        if (active) {
+          setUser(sessionData.user || null)
+          setIsAdmin(adminData.isAdmin || false)
+          setMembership(membershipData.membership || null)
+          if (showLoading) setIsLoading(false)
+        }
       } catch (error) {
         console.error("[v0] Session fetch error:", error)
-        setUser(null)
-        setIsAdmin(false)
-        setMembership(null)
-        setIsLoading(false)
+        if (active && showLoading) {
+          setUser(null)
+          setIsAdmin(false)
+          setMembership(null)
+          setIsLoading(false)
+        }
       }
     }
 
-    fetchSessionData()
+    void fetchSessionData(true)
+    const refresh = () => {
+      if (active && document.visibilityState === "visible") void fetchSessionData()
+    }
+    const interval = window.setInterval(refresh, 15000)
+    document.addEventListener("visibilitychange", refresh)
+    return () => {
+      active = false
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", refresh)
+    }
   }, [])
 
   const handleLogout = async () => {

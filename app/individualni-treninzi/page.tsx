@@ -49,8 +49,8 @@ export default function IndividualniTreninziPage() {
   const [busyId, setBusyId] = useState<number | null>(null);
   const [memberAccess, setMemberAccess] = useState<MemberAccess | null>(null);
 
-  const loadSlots = async () => {
-    setLoading(true);
+  const loadSlots = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setMessage("");
     try {
       const response = await fetch("/api/individual-trainings/slots", {
@@ -72,7 +72,7 @@ export default function IndividualniTreninziPage() {
           : "Greška pri učitavanju termina",
       );
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -104,6 +104,18 @@ export default function IndividualniTreninziPage() {
       active = false;
     };
   }, [router]);
+
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") void loadSlots(false);
+    };
+    const interval = window.setInterval(refresh, 10000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
 
   const reserve = async (slotId: number) => {
     setBusyId(slotId);

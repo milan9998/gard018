@@ -32,16 +32,27 @@ export function Schedule() {
 
   useEffect(() => {
     let active = true
-    fetch("/api/weekly-schedule", { cache: "no-store" })
-      .then(async (response) => {
+    const loadSchedule = async () => {
+      try {
+        const response = await fetch("/api/weekly-schedule", { cache: "no-store" })
         const data = await response.json().catch(() => ({}))
         if (!response.ok) throw new Error(data.error || "Raspored nije dostupan")
         if (active) setItems(data.schedule || [])
-      })
-      .catch(() => {
+      } catch {
         // Zadržavamo poslednji poznati/fiksni raspored ako lokalni API trenutno nije dostupan.
-      })
-    return () => { active = false }
+      }
+    }
+    void loadSchedule()
+    const refresh = () => {
+      if (active && document.visibilityState === "visible") void loadSchedule()
+    }
+    const interval = window.setInterval(refresh, 15000)
+    document.addEventListener("visibilitychange", refresh)
+    return () => {
+      active = false
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", refresh)
+    }
   }, [])
 
   const schedule = useMemo(() => days.map((day) => ({

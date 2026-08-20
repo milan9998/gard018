@@ -154,7 +154,13 @@ function DatePickerField({
   );
 }
 
-export function MembersList({ members }: { members: Member[] }) {
+export function MembersList({
+  members,
+  onMembersChanged,
+}: {
+  members: Member[];
+  onMembersChanged?: () => Promise<void>;
+}) {
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
@@ -172,6 +178,16 @@ export function MembersList({ members }: { members: Member[] }) {
   const [individualExpiryDate, setIndividualExpiryDate] = useState("");
   const [isSavingIndividual, setIsSavingIndividual] = useState(false);
   const { toast } = useToast();
+
+  const refreshMembers = async () => {
+    if (onMembersChanged) {
+      await onMembersChanged();
+      return;
+    }
+    if ((window as any).refreshMembers) {
+      await (window as any).refreshMembers();
+    }
+  };
 
   const normalizeSearch = (value: string) =>
     value
@@ -341,10 +357,7 @@ export function MembersList({ members }: { members: Member[] }) {
         });
         setEditingMember(null);
 
-        setTimeout(() => {
-          console.log("[v0] Reloading page to show updated member...");
-          window.location.reload();
-        }, 1000);
+        await refreshMembers();
       } else {
         console.error("[v0] ===== UPDATE FAILED =====", data);
         toast({
@@ -396,9 +409,7 @@ export function MembersList({ members }: { members: Member[] }) {
           title: "Uspešno obrisano",
           description: `Član ${memberName} je uspešno obrisan iz sistema.`,
         });
-        if ((window as any).refreshMembers) {
-          (window as any).refreshMembers();
-        }
+        await refreshMembers();
       } else {
         const data = await response.json();
         toast({
@@ -446,8 +457,7 @@ export function MembersList({ members }: { members: Member[] }) {
         description: `${member.first_name} ${member.last_name}`,
       });
 
-      if ((window as any).refreshMembers)
-        await (window as any).refreshMembers();
+      await refreshMembers();
     } catch (error) {
       toast({
         title: "Greška",
@@ -484,8 +494,7 @@ export function MembersList({ members }: { members: Member[] }) {
         throw new Error(data.error || "Greška pri obnovi članarine");
       toast({ title: "Članarina obnovljena", description: data.message });
       setRenewingMember(null);
-      if ((window as any).refreshMembers)
-        await (window as any).refreshMembers();
+      await refreshMembers();
     } catch (error) {
       toast({
         title: "Greška",
@@ -536,8 +545,7 @@ export function MembersList({ members }: { members: Member[] }) {
         description: `${individualMember.first_name} ${individualMember.last_name}`,
       });
       setIndividualMember(null);
-      if ((window as any).refreshMembers)
-        await (window as any).refreshMembers();
+      await refreshMembers();
     } catch (error) {
       toast({
         title: "Greška",
@@ -574,8 +582,7 @@ export function MembersList({ members }: { members: Member[] }) {
         title: "Članarina produžena",
         description: `${member.first_name} ${member.last_name}: ${data.message || "produženje je sačuvano."}`,
       });
-      if ((window as any).refreshMembers)
-        await (window as any).refreshMembers();
+      await refreshMembers();
     } catch (error) {
       toast({
         title: "Greška",

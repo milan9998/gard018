@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { CheckCircle2, Loader2, QrCode, XCircle } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
@@ -29,26 +29,45 @@ export default function MojQrPage() {
   const [data, setData] = useState<QrData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const hasDataRef = useRef(false)
 
   useEffect(() => {
-    const loadQr = async () => {
+    let active = true
+    const loadQr = async (showLoading: boolean) => {
+      if (showLoading) setLoading(true)
       try {
         const response = await fetch("/api/member-qr", { cache: "no-store" })
         const payload = await response.json().catch(() => ({}))
         if (response.status === 401) {
-          router.replace("/prijava")
+          if (active) router.replace("/prijava")
           return
         }
         if (!response.ok) throw new Error(payload.error || "QR kod nije dostupan")
-        setData(payload)
+        if (active) {
+          setData(payload)
+          hasDataRef.current = true
+          setError("")
+        }
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : "QR kod nije dostupan")
+        if (active && !hasDataRef.current) {
+          setError(loadError instanceof Error ? loadError.message : "QR kod nije dostupan")
+        }
       } finally {
-        setLoading(false)
+        if (active && showLoading) setLoading(false)
       }
     }
 
-    void loadQr()
+    void loadQr(true)
+    const refresh = () => {
+      if (active && document.visibilityState === "visible") void loadQr(false)
+    }
+    const interval = window.setInterval(refresh, 10000)
+    document.addEventListener("visibilitychange", refresh)
+    return () => {
+      active = false
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", refresh)
+    }
   }, [router])
 
   return (
