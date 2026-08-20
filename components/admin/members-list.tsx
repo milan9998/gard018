@@ -41,6 +41,7 @@ interface Member {
   individual_training_paid?: boolean;
   individual_start_date?: string | null;
   individual_expiry_date?: string | null;
+  is_admin?: boolean;
   created_at: string;
 }
 
@@ -157,9 +158,11 @@ function DatePickerField({
 export function MembersList({
   members,
   onMembersChanged,
+  canDeleteAdminAccounts = false,
 }: {
   members: Member[];
   onMembersChanged?: () => Promise<void>;
+  canDeleteAdminAccounts?: boolean;
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -768,6 +771,10 @@ export function MembersList({
                 {isProtectedAdmin(member.email) ? (
                   <span className="shrink-0 self-end rounded-md border border-primary/20 px-2 py-1 text-xs text-muted-foreground sm:self-start">
                     Zaštićen trener
+                  </span>
+                ) : member.is_admin && !canDeleteAdminAccounts ? (
+                  <span className="shrink-0 self-end rounded-md border border-primary/20 px-2 py-1 text-xs text-muted-foreground sm:self-start">
+                    Admin nalog
                   </span>
                 ) : (
                   <Button
