@@ -1,5 +1,7 @@
 import { createHash, randomBytes } from "node:crypto"
 import { Resend } from "resend"
+import { withTimeout } from "./async-utils.ts"
+import { getPublicBaseUrl } from "./public-url.ts"
 
 export const EMAIL_VERIFICATION_HOURS = 24
 
@@ -26,15 +28,15 @@ function escapeHtml(value: string) {
   })[character] || character)
 }
 
-export async function sendEmailVerification({ email, firstName, token }: { email: string; firstName: string; token: string }) {
+export async function sendEmailVerification({ email, firstName, token, request }: { email: string; firstName: string; token: string; request?: Request }) {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey || !apiKey.startsWith("re_")) throw new Error("Email servis nije konfigurisan")
 
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000").replace(/\/+$/, "")
+  const baseUrl = getPublicBaseUrl(request)
   const verifyUrl = `${baseUrl}/api/auth/verify-email?token=${encodeURIComponent(token)}`
   const safeFirstName = escapeHtml(firstName || "člane")
   const resend = new Resend(apiKey)
-  const result = await resend.emails.send({
+  const result = await withTimeout(resend.emails.send({
     from: "GARD 018 <info@gard018.com>",
     to: email,
     subject: "Potvrdite email adresu - GARD 018",
@@ -58,7 +60,7 @@ export async function sendEmailVerification({ email, firstName, token }: { email
           </div>
         </body>
       </html>`,
-  })
+  }), 15_000, "Resend nije odgovorio u predviđenom roku")
 
   if (result.error) throw new Error(result.error.message || "Slanje verifikacionog emaila nije uspelo")
   return result.data
