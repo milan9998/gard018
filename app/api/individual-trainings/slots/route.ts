@@ -39,8 +39,12 @@ export async function GET() {
         (SELECT COUNT(*)::int FROM individual_training_bookings b
           WHERE b.slot_id = s.id AND b.status = 'booked') AS booking_count,
         (SELECT b.id FROM individual_training_bookings b
-          WHERE b.slot_id = s.id AND b.member_id = ${memberId} AND b.status = 'booked'
-          LIMIT 1) AS my_booking_id
+          WHERE b.slot_id = s.id AND b.member_id = ${memberId} AND b.status IN ('pending', 'booked')
+          LIMIT 1) AS my_booking_id,
+        (SELECT b.status FROM individual_training_bookings b
+          WHERE b.slot_id = s.id AND b.member_id = ${memberId} AND b.status IN ('pending', 'booked')
+          LIMIT 1) AS my_booking_status,
+        (s.starts_at >= ((CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Belgrade')::date + INTERVAL '1 day')) AS my_booking_can_cancel
       FROM individual_training_slots s
       WHERE s.starts_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Belgrade')
         AND s.status = 'open'

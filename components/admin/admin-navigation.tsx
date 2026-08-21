@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Home,
   MessageSquare,
+  Newspaper,
   ScanLine,
   Settings,
   Shield,
@@ -19,6 +20,7 @@ const links = [
   { href: "/admin", label: "Članovi", icon: Users },
   { href: "/admin/qr-skener", label: "QR skener", icon: ScanLine },
   { href: "/admin/messages", label: "Poruke", icon: MessageSquare },
+  { href: "/admin/vesti", label: "Vesti", icon: Newspaper },
   {
     href: "/admin/nedeljni-treninzi",
     label: "Nedeljni treninzi",

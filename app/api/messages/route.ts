@@ -2,6 +2,7 @@ import { sql } from "@/lib/db-singleton" // Use singleton DB connection
 import { NextResponse } from "next/server"
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit"
 import { checkAdminAuth } from "@/lib/auth-helpers"
+import { sendPushToAdmins } from "@/lib/push-notifications"
 
 const messageLimiter = rateLimit({
   limit: 5,
@@ -88,6 +89,13 @@ export async function POST(request: Request) {
 
     console.log("[v0] Message created successfully from:", sanitizedEmail)
 
+    await sendPushToAdmins({
+      title: "Nova poruka preko kontakt forme",
+      body: `${sanitizedName}: ${sanitizedMessage.slice(0, 120)}${sanitizedMessage.length > 120 ? "…" : ""}`,
+      url: "/admin/messages",
+      tag: `contact-message-${result[0].id}`,
+    })
+
     return NextResponse.json({ message: result[0] })
   } catch (error) {
     console.error("[v0] Error sending message:", {
@@ -126,5 +134,30 @@ export async function PATCH(request: Request) {
       stack: error instanceof Error ? error.stack : undefined,
     })
     return NextResponse.json({ error: "Greška pri ažuriranju poruke" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const auth = await checkAdminAuth()
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: auth.error || "Nemate pristup" }, { status: auth.isAuthenticated ? 403 : 401 })
+    }
+
+    const { id } = await request.json()
+    const messageId = Number(id)
+    if (!Number.isInteger(messageId) || messageId <= 0) {
+      return NextResponse.json({ error: "Nevažeća poruka" }, { status: 400 })
+    }
+
+    const result = await sql`DELETE FROM messages WHERE id = ${messageId} RETURNING id`
+    if (result.length === 0) {
+      return NextResponse.json({ error: "Poruka nije pronađena" }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("[v0] Error deleting message:", error)
+    return NextResponse.json({ error: "Greška pri brisanju poruke" }, { status: 500 })
   }
 }

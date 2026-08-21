@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css"
 import { Analytics } from "@vercel/analytics/next"
+import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
   title: "GARD 018 | Boks Klub Niš | Kik Boks | Muay Thai | Borilački Klub",
@@ -90,6 +91,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <div className="gradient-bg" />
         {children}
+        <Toaster />
         <Analytics />
       </body>
     </html>

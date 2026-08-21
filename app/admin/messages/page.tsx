@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { AdminGuard } from "@/components/admin/admin-guard"
 import { AdminNavigation } from "@/components/admin/admin-navigation"
-import { MessageSquare, Mail, Phone, Clock, Check } from "lucide-react"
+import { MessageSquare, Mail, Phone, Clock, Check, Trash2 } from "lucide-react"
 
 type Message = {
   id: number
@@ -19,6 +19,7 @@ type Message = {
 export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   useEffect(() => {
     fetchMessages()
@@ -46,6 +47,25 @@ export default function MessagesPage() {
       fetchMessages()
     } catch (error) {
       console.error("Error marking message as read:", error)
+    }
+  }
+
+  const deleteMessage = async (id: number) => {
+    if (!window.confirm("Da li sigurno želiš da obrišeš ovu poruku?")) return
+    setDeletingId(id)
+    try {
+      const response = await fetch("/api/messages", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error || "Brisanje poruke nije uspelo")
+      await fetchMessages()
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Brisanje poruke nije uspelo")
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -113,17 +133,29 @@ export default function MessagesPage() {
                         </div>
                       </div>
                     </div>
-                    {msg.status === "unread" && (
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                      {msg.status === "unread" && (
+                        <Button
+                          onClick={() => markAsRead(msg.id)}
+                          variant="outline"
+                          size="sm"
+                          className="w-full border-primary/20 hover:bg-primary/10 sm:w-auto"
+                        >
+                          <Check className="w-4 h-4 mr-2" />
+                          Označi kao pročitano
+                        </Button>
+                      )}
                       <Button
-                        onClick={() => markAsRead(msg.id)}
+                        onClick={() => deleteMessage(msg.id)}
                         variant="outline"
                         size="sm"
-                        className="w-full border-primary/20 hover:bg-primary/10 sm:w-auto"
+                        disabled={deletingId === msg.id}
+                        className="w-full border-red-500/40 text-red-300 hover:bg-red-500/10 sm:w-auto"
                       >
-                        <Check className="w-4 h-4 mr-2" />
-                        Označi kao pročitano
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {deletingId === msg.id ? "Brisanje..." : "Obriši poruku"}
                       </Button>
-                    )}
+                    </div>
                   </div>
                   <div className="bg-background/50 rounded-lg p-3 border border-primary/10 sm:p-4">
                     <p className="text-foreground whitespace-pre-wrap">{msg.message}</p>

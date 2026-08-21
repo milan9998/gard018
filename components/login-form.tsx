@@ -21,6 +21,7 @@ export function LoginForm() {
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [resetEmail, setResetEmail] = useState("")
   const [isResetting, setIsResetting] = useState(false)
+  const [resetNotice, setResetNotice] = useState("")
   const [isResendingVerification, setIsResendingVerification] = useState(false)
   const [emailNotVerified, setEmailNotVerified] = useState(false)
   const [canResendVerification, setCanResendVerification] = useState(false)
@@ -108,7 +109,13 @@ export function LoginForm() {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault()
+    const email = resetEmail.trim()
+    if (!email) {
+      setResetNotice("Unesite email adresu.")
+      return
+    }
     setIsResetting(true)
+    setResetNotice("Šaljem zahtev...")
     const controller = new AbortController()
     const timeoutId = window.setTimeout(() => controller.abort(), 20_000)
 
@@ -116,20 +123,22 @@ export function LoginForm() {
       const response = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: resetEmail }),
+        body: JSON.stringify({ email }),
         signal: controller.signal,
       })
 
       if (response.ok) {
         setShowForgotPassword(false)
         setResetEmail("")
+        setResetNotice("")
         toast({
           title: "Link poslat!",
           description: "Link za resetovanje je poslat na vašu email adresu.",
           duration: 5000,
         })
       } else {
-        const data = await response.json()
+        const data = await response.json().catch(() => ({}))
+        setResetNotice(data.error || "Slanje email-a nije uspelo.")
         toast({
           title: "Greška",
           description: data.error || "Greška pri slanju email-a",
@@ -148,6 +157,9 @@ export function LoginForm() {
         variant: "destructive",
         duration: 5000,
       })
+      setResetNotice(error instanceof DOMException && error.name === "AbortError"
+        ? "Email servis nije odgovorio u roku od 20 sekundi."
+        : "Slanje email-a nije uspelo. Pokušajte ponovo.")
     } finally {
       window.clearTimeout(timeoutId)
       setIsResetting(false)
@@ -271,7 +283,10 @@ export function LoginForm() {
         </CardContent>
       </Card>
 
-      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+      <Dialog open={showForgotPassword} onOpenChange={(open) => {
+        setShowForgotPassword(open)
+        if (!open) setResetNotice("")
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-foreground">Resetovanje lozinke</DialogTitle>
@@ -292,17 +307,21 @@ export function LoginForm() {
                   type="email"
                   placeholder="vas@email.com"
                   value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
+                  onChange={(e) => {
+                    setResetEmail(e.target.value)
+                    setResetNotice("")
+                  }}
                   required
                   disabled={isResetting}
                   className="pl-10 h-11 bg-background border-primary/20 text-foreground placeholder:text-muted-foreground focus:border-primary transition-colors"
                 />
               </div>
+              {resetNotice && <p className="text-sm text-muted-foreground" role="status">{resetNotice}</p>}
             </div>
 
             <Button
               type="submit"
-              disabled={isResetting || !resetEmail}
+              disabled={isResetting || !resetEmail.trim()}
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-11 font-semibold shadow-md transition-all"
             >
               {isResetting ? (

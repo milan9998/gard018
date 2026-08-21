@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server"
 import { sql } from "@/lib/db-singleton" // Use singleton DB connection
 import bcrypt from "bcryptjs"
-import { rateLimit, rateLimitResponse } from "@/lib/rate-limit"
 import { hashPasswordSHA256, verifyPassword } from "@/lib/password-utils"
 import { setSession } from "@/lib/session"
-
-const loginLimiter = rateLimit({
-  limit: 5,
-  windowMs: 15 * 60 * 1000, // 15 minutes
-})
 
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -17,14 +11,6 @@ function isValidEmail(email: string): boolean {
 
 export async function POST(request: Request) {
   try {
-    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown"
-    const rateLimitResult = await loginLimiter(ip)
-
-    if (!rateLimitResult.success) {
-      console.log("[v0] Login rate limit exceeded for IP:", ip)
-      return rateLimitResponse(rateLimitResult.reset)
-    }
-
     const body = await request.json()
     const { email, password } = body
 

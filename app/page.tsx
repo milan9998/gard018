@@ -5,6 +5,7 @@ import { Programs } from "@/components/programs"
 import { Schedule } from "@/components/schedule"
 import { Gallery } from "@/components/gallery"
 import { Contact } from "@/components/contact"
+import { NewsPreview } from "@/components/news-preview"
 import { Footer } from "@/components/footer"
 import type { Metadata } from "next"
 
@@ -49,6 +50,7 @@ export default function Home() {
       <main className="min-h-screen bg-background">
         <Header />
         <Hero />
+        <NewsPreview />
         <About />
         <Programs />
         <Schedule />

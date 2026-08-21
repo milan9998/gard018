@@ -12,6 +12,7 @@ const navLinks = [
   { href: "#o-nama", label: "O Nama" },
   { href: "#programi", label: "Programi" },
   { href: "#raspored", label: "Raspored" },
+  { href: "/vesti", label: "Vesti" },
   { href: "#galerija", label: "Galerija" },
   { href: "#kontakt", label: "Kontakt" },
 ];

@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react"
 import { DayPicker } from "react-day-picker"
-import { Calendar, CheckCircle2, Clock3, Loader2, Plus, Trash2, Users } from "lucide-react"
+import { Calendar, CheckCircle2, Clock3, Loader2, Plus, Trash2, Users, XCircle } from "lucide-react"
 import { AdminGuard } from "@/components/admin/admin-guard"
 import { AdminNavigation } from "@/components/admin/admin-navigation"
 import { Button } from "@/components/ui/button"
+import { PushNotificationButton } from "@/components/push-notification-button"
 
 type Slot = {
   id: number
@@ -17,6 +18,7 @@ type Slot = {
 
 type Booking = {
   id: number
+  status: "pending" | "booked"
   starts_at: string
   ends_at: string
   first_name: string
@@ -74,13 +76,16 @@ export default function AdminIndividualniTreninziPage() {
   const [endTime, setEndTime] = useState("19:00")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [busyBookingId, setBusyBookingId] = useState<number | null>(null)
   const [message, setMessage] = useState("")
 
   const selectedDateKey = selectedDate ? dateKey(selectedDate) : ""
   const slotDates = useMemo(() => slots.map((slot) => new Date(`${localDateFromValue(slot.starts_at)}T00:00:00`)), [slots])
+  const pendingBookings = bookings.filter((booking) => booking.status === "pending")
+  const confirmedBookings = bookings.filter((booking) => booking.status === "booked")
 
-  const load = async () => {
-    setLoading(true)
+  const load = async (showLoading = true) => {
+    if (showLoading) setLoading(true)
     try {
       const [slotsResponse, bookingsResponse] = await Promise.all([
         fetch("/api/individual-trainings/slots", { cache: "no-store" }),
@@ -95,12 +100,31 @@ export default function AdminIndividualniTreninziPage() {
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Greška pri učitavanju podataka")
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 
   useEffect(() => {
     load()
+  }, [])
+
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") void load(false)
+    }
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type === "gard018-push-received") refresh()
+    }
+    const interval = window.setInterval(refresh, 5000)
+    document.addEventListener("visibilitychange", refresh)
+    window.addEventListener("focus", refresh)
+    navigator.serviceWorker?.addEventListener("message", handleServiceWorkerMessage)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", refresh)
+      window.removeEventListener("focus", refresh)
+      navigator.serviceWorker?.removeEventListener("message", handleServiceWorkerMessage)
+    }
   }, [])
 
   const createSlot = async (event: FormEvent<HTMLFormElement>) => {
@@ -151,6 +175,27 @@ export default function AdminIndividualniTreninziPage() {
     }
   }
 
+  const reviewBooking = async (bookingId: number, action: "approve" | "reject" | "cancel") => {
+    if (action === "cancel" && !window.confirm("Da li sigurno želiš da otkažeš ovaj potvrđeni individualni trening?")) return
+    setBusyBookingId(bookingId)
+    setMessage("")
+    try {
+      const response = await fetch("/api/individual-trainings/bookings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, action }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error || "Greška pri obradi zahteva")
+      await load()
+      setMessage(action === "approve" ? "Trening je potvrđen članu." : action === "cancel" ? "Potvrđeni trening je otkazan i član je obavešten." : "Zahtev je odbijen.")
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Greška pri obradi zahteva")
+    } finally {
+      setBusyBookingId(null)
+    }
+  }
+
   return (
     <AdminGuard>
       <main className="min-h-screen bg-background px-3 pb-20 pt-20 sm:px-6 sm:pt-24">
@@ -162,9 +207,13 @@ export default function AdminIndividualniTreninziPage() {
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Termini i rezervacije</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:mt-3 sm:text-base">
-              Klikni dan u kalendaru, izaberi vreme i objavi slobodan termin. Plaćanje individualnog treninga čekira se na stranici članova.
+              Klikni dan u kalendaru, izaberi vreme i objavi slobodan termin. Novi zahtevi članova čekaju tvoje odobrenje.
             </p>
           </header>
+
+          <div className="mb-6">
+            <PushNotificationButton />
+          </div>
 
           {message && (
             <div className="mb-6 flex items-start gap-3 rounded-xl border border-primary/30 bg-primary/10 p-4 text-sm text-foreground" role="status">
@@ -252,29 +301,39 @@ export default function AdminIndividualniTreninziPage() {
           </div>
 
           <section className="mt-10 sm:mt-12">
-            <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-foreground sm:text-2xl"><Users className="h-5 w-5 text-primary" /> Rezervacije</h2>
-            {bookings.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-primary/30 bg-card/40 p-6 text-sm text-muted-foreground sm:p-8">Nema budućih rezervacija.</div>
+            <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-foreground sm:text-2xl"><Clock3 className="h-5 w-5 text-yellow-300" /> Zahtevi za odobrenje</h2>
+            {pendingBookings.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-primary/30 bg-card/40 p-6 text-sm text-muted-foreground sm:p-8">Nema zahteva koji čekaju odobrenje.</div>
             ) : (
-              <>
-                <div className="space-y-3 sm:hidden">
-                  {bookings.map((booking) => (
-                    <div key={booking.id} className="rounded-xl border border-primary/20 bg-card/40 p-4">
-                      <p className="font-semibold text-foreground">{booking.first_name} {booking.last_name}</p>
-                      <p className="mt-1 break-all text-sm text-muted-foreground">{booking.email}</p>
-                      <p className="mt-3 flex items-center gap-2 text-sm text-primary"><Calendar className="h-4 w-4" /> {formatDateTime(booking.starts_at)}</p>
+              <div className="grid gap-3 lg:grid-cols-2">
+                {pendingBookings.map((booking) => (
+                  <div key={booking.id} className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4 sm:p-5">
+                    <p className="font-semibold text-foreground">{booking.first_name} {booking.last_name}</p>
+                    <p className="mt-1 break-all text-sm text-muted-foreground">{booking.email}</p>
+                    <p className="mt-3 flex items-center gap-2 text-sm text-primary"><Calendar className="h-4 w-4" /> {formatDateTime(booking.starts_at)}</p>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <Button disabled={busyBookingId === booking.id} onClick={() => reviewBooking(booking.id, "approve")} className="bg-green-600 text-white hover:bg-green-700"><CheckCircle2 className="mr-2 h-4 w-4" /> Prihvati</Button>
+                      <Button disabled={busyBookingId === booking.id} onClick={() => reviewBooking(booking.id, "reject")} variant="outline" className="border-red-500/40 text-red-300 hover:bg-red-500/10"><XCircle className="mr-2 h-4 w-4" /> Odbij</Button>
                     </div>
-                  ))}
-                </div>
-                <div className="hidden overflow-x-auto rounded-xl border border-primary/20 bg-card/40 sm:block">
-                  <table className="w-full min-w-[600px] text-left text-sm">
-                    <thead className="border-b border-primary/20 text-muted-foreground"><tr><th className="p-4">Termin</th><th className="p-4">Član</th><th className="p-4">Email</th></tr></thead>
-                    <tbody>
-                      {bookings.map((booking) => <tr key={booking.id} className="border-b border-primary/10 last:border-0"><td className="p-4 text-foreground">{formatDateTime(booking.starts_at)}</td><td className="p-4 text-foreground">{booking.first_name} {booking.last_name}</td><td className="p-4 text-muted-foreground">{booking.email}</td></tr>)}
-                    </tbody>
-                  </table>
-                </div>
-              </>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="mt-10">
+            <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-foreground sm:text-2xl"><CheckCircle2 className="h-5 w-5 text-green-400" /> Potvrđeni treninzi</h2>
+            {confirmedBookings.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-primary/30 bg-card/40 p-6 text-sm text-muted-foreground sm:p-8">Nema budućih potvrđenih treninga.</div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-primary/20 bg-card/40">
+                <table className="w-full min-w-[600px] text-left text-sm">
+                  <thead className="border-b border-primary/20 text-muted-foreground"><tr><th className="p-4">Termin</th><th className="p-4">Član</th><th className="p-4">Email</th><th className="p-4">Status</th><th className="p-4">Akcija</th></tr></thead>
+                  <tbody>
+                    {confirmedBookings.map((booking) => <tr key={booking.id} className="border-b border-primary/10 last:border-0"><td className="p-4 text-foreground">{formatDateTime(booking.starts_at)}</td><td className="p-4 text-foreground">{booking.first_name} {booking.last_name}</td><td className="p-4 text-muted-foreground">{booking.email}</td><td className="p-4 text-green-400">Potvrđen</td><td className="p-4"><Button type="button" variant="outline" disabled={busyBookingId === booking.id} onClick={() => reviewBooking(booking.id, "cancel")} className="border-red-500/40 text-red-300 hover:bg-red-500/10"><Trash2 className="mr-2 h-4 w-4" /> Otkaži</Button></td></tr>)}
+                  </tbody>
+                </table>
+              </div>
             )}
           </section>
         </div>

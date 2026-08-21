@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserPageNavigation } from "@/components/user-page-navigation";
+import { PushNotificationButton } from "@/components/push-notification-button";
 
 type Slot = {
   id: number;
@@ -20,6 +21,8 @@ type Slot = {
   ends_at: string;
   booking_count: number;
   my_booking_id: number | null;
+  my_booking_status: "pending" | "booked" | null;
+  my_booking_can_cancel: boolean;
 };
 
 type MemberAccess = {
@@ -45,6 +48,7 @@ export default function IndividualniTreninziPage() {
   const [checkingRole, setCheckingRole] = useState(true);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [messageIsError, setMessageIsError] = useState(true);
   const [requiresLogin, setRequiresLogin] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [memberAccess, setMemberAccess] = useState<MemberAccess | null>(null);
@@ -66,6 +70,7 @@ export default function IndividualniTreninziPage() {
       setSlots(data.slots || []);
       setMemberAccess(data.member || null);
     } catch (error) {
+      setMessageIsError(true);
       setMessage(
         error instanceof Error
           ? error.message
@@ -109,11 +114,18 @@ export default function IndividualniTreninziPage() {
     const refresh = () => {
       if (document.visibilityState === "visible") void loadSlots(false);
     };
-    const interval = window.setInterval(refresh, 10000);
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type === "gard018-push-received") refresh();
+    };
+    const interval = window.setInterval(refresh, 5000);
     document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+    navigator.serviceWorker?.addEventListener("message", handleServiceWorkerMessage);
     return () => {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
+      navigator.serviceWorker?.removeEventListener("message", handleServiceWorkerMessage);
     };
   }, []);
 
@@ -130,7 +142,10 @@ export default function IndividualniTreninziPage() {
       if (!response.ok)
         throw new Error(data.error || "Rezervacija nije uspela");
       await loadSlots();
+      setMessageIsError(false);
+      setMessage(data.message || "Zahtev je poslat i čeka odobrenje trenera.");
     } catch (error) {
+      setMessageIsError(true);
       setMessage(
         error instanceof Error ? error.message : "Rezervacija nije uspela",
       );
@@ -152,7 +167,10 @@ export default function IndividualniTreninziPage() {
       if (!response.ok)
         throw new Error(data.error || "Otkazivanje nije uspelo");
       await loadSlots();
+      setMessageIsError(false);
+      setMessage("Rezervacija je otkazana.");
     } catch (error) {
+      setMessageIsError(true);
       setMessage(
         error instanceof Error ? error.message : "Otkazivanje nije uspelo",
       );
@@ -185,7 +203,16 @@ export default function IndividualniTreninziPage() {
             Termine mogu da rezervišu samo prijavljeni članovi kojima je admin
             označio važeći period individualnog treninga.
           </p>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            Otkazivanje je moguće do ponoći dana pre zakazanog treninga.
+          </p>
         </div>
+
+        {!requiresLogin && (
+          <div className="mb-6">
+            <PushNotificationButton />
+          </div>
+        )}
 
         {!requiresLogin &&
           memberAccess &&
@@ -215,8 +242,18 @@ export default function IndividualniTreninziPage() {
         )}
 
         {!requiresLogin && message && (
-          <div className="mb-6 flex items-center gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-red-300">
-            <XCircle className="h-5 w-5 shrink-0" />
+          <div
+            className={`mb-6 flex items-center gap-3 rounded-lg border p-4 ${
+              messageIsError
+                ? "border-red-500/30 bg-red-500/10 text-red-300"
+                : "border-green-500/30 bg-green-500/10 text-green-300"
+            }`}
+          >
+            {messageIsError ? (
+              <XCircle className="h-5 w-5 shrink-0" />
+            ) : (
+              <CheckCircle2 className="h-5 w-5 shrink-0" />
+            )}
             {message}
           </div>
         )}
@@ -237,7 +274,9 @@ export default function IndividualniTreninziPage() {
         {!requiresLogin && !loading && slots.length > 0 && (
           <div className="grid gap-4 md:grid-cols-2">
             {slots.map((slot) => {
-              const isBooked = Boolean(slot.my_booking_id);
+              const hasBooking = Boolean(slot.my_booking_id);
+              const isPending = slot.my_booking_status === "pending";
+              const canCancel = slot.my_booking_can_cancel;
               return (
                 <div
                   key={slot.id}
@@ -262,17 +301,31 @@ export default function IndividualniTreninziPage() {
                     </span>
                   </div>
 
-                  {isBooked ? (
+                  {hasBooking ? (
                     <Button
                       variant="outline"
-                      className="mt-6 w-full border-green-500/40 text-green-400 hover:bg-green-500/10"
-                      disabled={busyId === slot.id}
+                      className={`mt-6 w-full ${
+                        isPending
+                          ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-300 hover:bg-yellow-500/15"
+                          : "border-green-500/40 text-green-400 hover:bg-green-500/10"
+                      }`}
+                      disabled={busyId === slot.id || !canCancel}
                       onClick={() => cancel(slot.my_booking_id!, slot.id)}
                     >
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      {isPending ? (
+                        <Clock className="mr-2 h-4 w-4" />
+                      ) : (
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                      )}
                       {busyId === slot.id
                         ? "Čuvanje..."
-                        : "Rezervisano — otkaži"}
+                        : isPending
+                          ? canCancel
+                            ? "Čeka odobrenje — otkaži zahtev"
+                            : "Čeka odobrenje — otkazivanje nije moguće"
+                          : canCancel
+                            ? "Trening potvrđen — otkaži"
+                            : "Trening potvrđen — otkazivanje nije moguće"}
                     </Button>
                   ) : (
                     <Button
