@@ -136,8 +136,9 @@ export function Footer() {
             target="_blank"
             rel="noopener noreferrer"
             className="group mx-auto mt-7 inline-flex w-full items-center justify-center gap-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            aria-label="Made by LIBETECH"
+            aria-label="Powered by LIBETECH"
           >
+            <span className="text-base footer-powered-by">Powered by</span>
             <Image
               src="/libetech.png"
               alt="LIBETECH"
@@ -145,9 +146,7 @@ export function Footer() {
               height={38}
               className="h-9 w-9 object-contain"
             />
-            <span className="text-base">
-              Made by <span className="font-semibold text-foreground group-hover:text-primary">LIBETECH</span>
-            </span>
+            <span className="text-base font-semibold text-foreground group-hover:text-primary">LIBETECH</span>
           </a>
         </div>
       </div>

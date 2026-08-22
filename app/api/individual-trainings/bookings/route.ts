@@ -321,16 +321,16 @@ export async function PATCH(request: Request) {
     await sendPushToMember(result[0].email, {
       title:
         action === "approve"
-          ? "Individualni trening je potvrđen"
+          ? "Admin je potvrdio individualni trening"
           : action === "cancel"
-            ? "Individualni trening je otkazan"
-            : "Zahtev za trening nije prihvaćen",
+            ? "Admin je otkazao individualni trening"
+            : "Admin nije prihvatio zahtev za trening",
       body:
         action === "approve"
-          ? `Ogi je potvrdio vaš termin ${formatTrainingDate(result[0].starts_at)}.`
+          ? `Admin je potvrdio vaš termin ${formatTrainingDate(result[0].starts_at)}.`
           : action === "cancel"
-            ? `Ogi je otkazao vaš termin ${formatTrainingDate(result[0].starts_at)}. Kontaktirajte klub za dogovor.`
-            : `Vaš zahtev za termin ${formatTrainingDate(result[0].starts_at)} je odbijen. Možete izabrati drugi termin.`,
+            ? `Admin je otkazao vaš termin ${formatTrainingDate(result[0].starts_at)}. Kontaktirajte klub za dogovor.`
+            : `Admin nije prihvatio vaš zahtev za termin ${formatTrainingDate(result[0].starts_at)}. Možete izabrati drugi termin.`,
       url: "/individualni-treninzi",
       tag: `individual-review-${result[0].id}`,
     });

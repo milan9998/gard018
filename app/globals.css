@@ -266,3 +266,41 @@
   background: linear-gradient(to top, transparent 0%, transparent 100%);
   pointer-events: none;
 }
+
+/* A continuous ultra-blue highlight sweeps through the footer credit. */
+.footer-powered-by {
+  display: inline-block;
+  color: #1684ff;
+  background: linear-gradient(
+    105deg,
+    #1684ff 0%,
+    #1684ff 34%,
+    #00d9ff 46%,
+    #e5fbff 50%,
+    #00d9ff 54%,
+    #1684ff 66%,
+    #1684ff 100%
+  );
+  background-size: 230% 100%;
+  background-position: 230% 0;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: footer-powered-by-shine 2.2s linear infinite;
+}
+
+@keyframes footer-powered-by-shine {
+  from {
+    background-position: 230% 0;
+  }
+  to {
+    background-position: -30% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-powered-by {
+    animation: none;
+    background-position: 50% 0;
+  }
+}
