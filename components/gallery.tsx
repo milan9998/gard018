@@ -46,7 +46,7 @@ export function Gallery() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
   return (
-    <section id="galerija" className="py-24 bg-card">
+    <section id="galerija" className="premium-section motion-section py-24 bg-card">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <p className="text-primary uppercase tracking-[0.3em] text-sm mb-4 font-medium">Galerija</p>
@@ -55,9 +55,12 @@ export function Gallery() {
             style={{ fontFamily: "var(--font-heading)" }}
           >
             IZ NAŠEG KLUBA
-          </h2>
-          <div className="w-20 h-1 bg-primary mx-auto" />
-        </div>
+            </h2>
+            <div className="w-20 h-1 bg-primary mx-auto" />
+            <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Pogledaj atmosferu sa naših treninga i upoznaj ekipu koja svaki dolazak pretvara u korak napred.
+            </p>
+          </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {images.map((image, index) => (

@@ -25,7 +25,7 @@ Lokalni `.env.local` nije deo Git repozitorijuma.
 
 ## Produkciona arhitektura
 
-- `caddy`: HTTPS za `app.gard018.com` i reverse proxy
+- `caddy`: HTTPS za `gard018.com` i `www.gard018.com`, plus reverse proxy
 - `app`: Next.js standalone image
 - `postgres`: PostgreSQL 16 sa trajnim volume-om
 - `scheduler`: dnevna provera članarina posle 08:00 Europe/Belgrade
@@ -64,9 +64,9 @@ docker compose logs --tail=100 caddy
 
 Otvoriti:
 
-- `https://app.gard018.com/api/health`
-- `https://app.gard018.com/prijava`
-- `https://app.gard018.com/registracija`
+- `https://gard018.com/api/health`
+- `https://gard018.com/prijava`
+- `https://gard018.com/registracija`
 
 Zatim proveriti registraciju i verifikacioni email, login, admin stranice, upload slike, QR kameru, članarinu i individualnu rezervaciju.
 

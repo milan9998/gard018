@@ -21,16 +21,16 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
+    <header className="premium-header fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           <Link href="/" className="flex items-center">
             <Image
-              src="/images/image.png"
+              src="/gard018-logo-transparent.png"
               alt="Gard 018 Logo"
               width={64}
               height={64}
-              className="w-12 h-12 md:w-16 md:h-16 opacity-80 hover:opacity-100 transition-opacity"
+              className="w-16 h-16 md:w-20 md:h-20 object-contain"
             />
           </Link>
 

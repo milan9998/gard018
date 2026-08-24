@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LogOut, Settings, UserIcon, Users, Shield, MessageSquare, Calendar, CalendarDays, AlertCircle, QrCode, ScanLine } from "lucide-react"
+import { LogOut, Settings, UserIcon, Users, Shield, MessageSquare, Calendar, CalendarDays, AlertCircle, QrCode, ScanLine, Menu as MenuIcon, Home, Newspaper } from "lucide-react"
 
 type User = {
   email: string
@@ -149,6 +149,44 @@ export function UserNav({ showAdminShortcut = true }: { showAdminShortcut?: bool
           <Shield className="h-4 w-4" />
           <span>Admin</span>
         </Link>
+      )}
+      {!isAdmin && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-primary/35 bg-primary/10 px-3 text-sm font-semibold text-primary transition hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              aria-label="Otvori meni"
+            >
+              <MenuIcon className="h-4 w-4" />
+              <span>Meni</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Brzi meni</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/") }>
+              <Home className="mr-2 h-4 w-4" />
+              Početna
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/moj-qr") }>
+              <QrCode className="mr-2 h-4 w-4" />
+              Moj QR kod
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/individualni-treninzi") }>
+              <Calendar className="mr-2 h-4 w-4" />
+              Individualni treninzi
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/vesti") }>
+              <Newspaper className="mr-2 h-4 w-4" />
+              Vesti
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/settings") }>
+              <Settings className="mr-2 h-4 w-4" />
+              Podešavanja
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
       <DropdownMenu>
         <DropdownMenuTrigger className="focus:outline-none">

@@ -1,12 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { DayPicker } from "react-day-picker";
-import { srLatn } from "date-fns/locale";
 import {
   Calendar,
   CalendarDays,
-  ChevronDown,
   Mail,
   User,
   AlertCircle,
@@ -19,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { isProtectedAdmin } from "@/lib/admin-constants";
+import { dateOnlyFromValue } from "@/lib/individual-training-access";
 import {
   Dialog,
   DialogContent,
@@ -51,13 +49,13 @@ interface DatePickerFieldProps {
   value: string;
   onChange: (value: string) => void;
   min?: string;
+  todayValue?: string;
 }
 
-const dateToISO = (date: Date) =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-
-const isoToDate = (value: string) =>
-  value ? new Date(`${value}T00:00:00`) : undefined;
+const isoToDate = (value: string) => {
+  const dateOnly = dateOnlyFromValue(value);
+  return dateOnly ? new Date(`${dateOnly}T00:00:00`) : undefined;
+};
 
 function DatePickerField({
   id,
@@ -65,92 +63,38 @@ function DatePickerField({
   value,
   onChange,
   min,
+  todayValue,
 }: DatePickerFieldProps) {
-  const [open, setOpen] = useState(false);
-  const selectedDate = isoToDate(value);
-  const minimumDate = isoToDate(min || "");
+  const dateValue = dateOnlyFromValue(value);
+  const minimumValue = dateOnlyFromValue(min);
 
   return (
-    <div className="relative space-y-2">
+    <div className="space-y-2">
       <label htmlFor={id} className="text-sm font-medium">
         {label}
       </label>
-      <button
-        id={id}
-        type="button"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={() => setOpen((isOpen) => !isOpen)}
-        className="flex h-11 w-full items-center justify-between rounded-lg border border-primary/25 bg-background px-3 text-left text-foreground outline-none transition hover:border-primary/60 focus-visible:ring-2 focus-visible:ring-primary"
-      >
-        <span className="flex min-w-0 items-center gap-2">
-          <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
-          <span className={value ? "font-medium" : "text-muted-foreground"}>
-            {selectedDate
-              ? selectedDate.toLocaleDateString("sr-RS", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })
-              : "Izaberi datum"}
-          </span>
-        </span>
-        <ChevronDown
-          className={`h-4 w-4 shrink-0 transition ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-
-      {open && (
-        <div className="mt-2 w-full rounded-xl border border-primary/25 bg-background p-2 shadow-2xl sm:min-w-[19rem]">
-          <DayPicker
-            mode="single"
-            captionLayout="dropdown"
-            startMonth={new Date(2000, 0, 1)}
-            endMonth={new Date(2100, 11, 1)}
-            selected={selectedDate}
-            onSelect={(date) => {
-              if (!date) return;
-              onChange(dateToISO(date));
-              setOpen(false);
-            }}
-            disabled={minimumDate ? { before: minimumDate } : undefined}
-            defaultMonth={selectedDate || minimumDate || new Date()}
-            weekStartsOn={1}
-            locale={srLatn}
-            showOutsideDays
-            fixedWeeks
-            className="mx-auto w-full"
-            classNames={{
-              months: "flex w-full flex-col",
-              month: "w-full space-y-3",
-              month_caption: "relative flex h-9 items-center justify-center",
-              dropdowns: "flex items-center justify-center gap-2",
-              dropdown:
-                "rounded-md border border-primary/25 bg-background px-2 py-1 text-sm font-semibold text-foreground outline-none focus:ring-2 focus:ring-primary",
-              caption_label: "text-sm font-semibold capitalize text-foreground",
-              nav: "flex items-center gap-1",
-              button_previous:
-                "absolute left-0 inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-              button_next:
-                "absolute right-0 inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-              month_grid: "w-full border-collapse",
-              weekdays: "flex w-full",
-              weekday:
-                "w-full text-center text-[0.68rem] font-semibold uppercase text-muted-foreground",
-              week: "mt-1 flex w-full",
-              day: "relative w-full p-0 text-center",
-              day_button:
-                "mx-auto flex h-9 w-9 items-center justify-center rounded-lg text-sm text-foreground transition hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-              selected: "bg-primary text-primary-foreground hover:bg-primary",
-              today: "font-bold ring-1 ring-primary/60 ring-inset",
-              outside: "text-muted-foreground/40",
-              disabled:
-                "cursor-not-allowed text-muted-foreground/25 hover:bg-transparent",
-              hidden: "invisible",
-            }}
+      <div className="flex items-center gap-2">
+        <div className="relative min-w-0 flex-1">
+          <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
+          <input
+            id={id}
+            type="date"
+            value={dateValue}
+            min={minimumValue || undefined}
+            onChange={(event) => onChange(event.target.value)}
+            className="h-11 w-full rounded-lg border border-primary/25 bg-background pl-10 pr-3 font-medium text-foreground outline-none transition [color-scheme:dark] hover:border-primary/60 focus-visible:ring-2 focus-visible:ring-primary"
           />
         </div>
-      )}
+        {todayValue && (
+          <button
+            type="button"
+            onClick={() => onChange(todayValue)}
+            className="h-11 shrink-0 rounded-lg border border-primary/35 bg-primary/10 px-3 text-sm font-semibold text-primary transition hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            Danas
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -177,8 +121,10 @@ export function MembersList({
   const [renewalDate, setRenewalDate] = useState("");
   const [isRenewing, setIsRenewing] = useState(false);
   const [individualMember, setIndividualMember] = useState<Member | null>(null);
-  const [individualStartDate, setIndividualStartDate] = useState("");
-  const [individualExpiryDate, setIndividualExpiryDate] = useState("");
+  const [individualPeriod, setIndividualPeriod] = useState({
+    startDate: "",
+    expiryDate: "",
+  });
   const [isSavingIndividual, setIsSavingIndividual] = useState(false);
   const { toast } = useToast();
 
@@ -258,7 +204,8 @@ export function MembersList({
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = isoToDate(dateString);
+    if (!date) return "—";
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
@@ -266,8 +213,16 @@ export function MembersList({
   };
 
   const todayISO = () => {
-    const date = new Date();
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Belgrade",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date());
+    const value = Object.fromEntries(
+      parts.map((part) => [part.type, part.value]),
+    );
+    return `${value.year}-${value.month}-${value.day}`;
   };
 
   const addCalendarMonth = (value: string) => {
@@ -513,16 +468,22 @@ export function MembersList({
   };
 
   const handleOpenIndividualPeriod = (member: Member) => {
-    const start = member.individual_start_date || todayISO();
+    const start =
+      dateOnlyFromValue(member.individual_start_date) || todayISO();
+    const expiry = dateOnlyFromValue(member.individual_expiry_date);
     setIndividualMember(member);
-    setIndividualStartDate(start);
-    setIndividualExpiryDate(
-      member.individual_expiry_date || addCalendarMonth(start),
-    );
+    setIndividualPeriod({
+      startDate: start,
+      expiryDate: expiry || addCalendarMonth(start),
+    });
   };
 
   const handleSaveIndividualPeriod = async () => {
-    if (!individualMember || !individualStartDate || !individualExpiryDate)
+    if (
+      !individualMember ||
+      !individualPeriod.startDate ||
+      !individualPeriod.expiryDate
+    )
       return;
     setIsSavingIndividual(true);
     try {
@@ -533,8 +494,8 @@ export function MembersList({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             paid: true,
-            start_date: individualStartDate,
-            expiry_date: individualExpiryDate,
+            start_date: individualPeriod.startDate,
+            expiry_date: individualPeriod.expiryDate,
           }),
         },
       );
@@ -919,18 +880,26 @@ export function MembersList({
             <DatePickerField
               id="individual-start-date"
               label="Važi od"
-              value={individualStartDate}
+              value={individualPeriod.startDate}
+              todayValue={todayISO()}
               onChange={(value) => {
-                setIndividualStartDate(value);
-                if (value) setIndividualExpiryDate(addCalendarMonth(value));
+                setIndividualPeriod({
+                  startDate: value,
+                  expiryDate: value ? addCalendarMonth(value) : "",
+                });
               }}
             />
             <DatePickerField
               id="individual-expiry-date"
               label="Važi do"
-              value={individualExpiryDate}
-              min={individualStartDate}
-              onChange={setIndividualExpiryDate}
+              value={individualPeriod.expiryDate}
+              min={individualPeriod.startDate}
+              onChange={(value) =>
+                setIndividualPeriod((period) => ({
+                  ...period,
+                  expiryDate: value,
+                }))
+              }
             />
           </div>
           <p className="text-xs text-muted-foreground">
@@ -948,8 +917,8 @@ export function MembersList({
               onClick={handleSaveIndividualPeriod}
               disabled={
                 isSavingIndividual ||
-                !individualStartDate ||
-                !individualExpiryDate
+                !individualPeriod.startDate ||
+                !individualPeriod.expiryDate
               }
             >
               {isSavingIndividual

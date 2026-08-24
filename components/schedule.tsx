@@ -63,7 +63,7 @@ export function Schedule() {
   })).filter((day) => day.classes.length > 0), [items])
 
   return (
-    <section id="raspored" className="py-24 relative">
+    <section id="raspored" className="premium-section motion-section py-24 relative">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 bg-primary/10 backdrop-blur-sm border border-primary/20 px-6 py-2 rounded-full mb-6">

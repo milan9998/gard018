@@ -2,7 +2,7 @@
   email info@gard018.com
 }
 
-app.gard018.com {
+gard018.com, www.gard018.com {
   encode zstd gzip
 
   request_body {
@@ -19,4 +19,3 @@ app.gard018.com {
     -Server
   }
 }
-

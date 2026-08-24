@@ -68,7 +68,7 @@ export function Contact() {
   }
 
   return (
-    <section id="kontakt" className="py-24 relative">
+    <section id="kontakt" className="premium-section motion-section py-24 relative">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
@@ -113,7 +113,9 @@ export function Contact() {
                   </div>
                   <div>
                     <p className="text-foreground font-semibold mb-1">Telefon</p>
-                    <p className="text-muted-foreground">069 010 5213</p>
+                    <a href="tel:+381690105213" className="text-muted-foreground transition-colors hover:text-primary">
+                      +381 69 010 5213
+                    </a>
                   </div>
                 </div>
 

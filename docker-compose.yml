@@ -31,7 +31,7 @@ services:
       - .env
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_BASE_URL: https://app.gard018.com
+      NEXT_PUBLIC_BASE_URL: https://gard018.com
       UPLOAD_DIR: /app/uploads
       TZ: Europe/Belgrade
     volumes:
@@ -91,4 +91,3 @@ networks:
   backend:
     internal: true
   web:
-

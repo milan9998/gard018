@@ -36,5 +36,4 @@ docker compose exec -T postgres pg_restore --no-owner --no-acl -U "$POSTGRES_USE
 docker compose up -d --remove-orphans
 docker compose ps
 
-echo "Prvo podizanje je završeno. Proveri: https://app.gard018.com/api/health"
-
+echo "Prvo podizanje je završeno. Proveri: https://gard018.com/api/health"

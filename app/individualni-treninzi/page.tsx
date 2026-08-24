@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -8,7 +7,6 @@ import {
   CheckCircle2,
   Clock,
   Loader2,
-  LogIn,
   XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,11 +47,10 @@ export default function IndividualniTreninziPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [messageIsError, setMessageIsError] = useState(true);
-  const [requiresLogin, setRequiresLogin] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [memberAccess, setMemberAccess] = useState<MemberAccess | null>(null);
 
-  const loadSlots = async (showLoading = true) => {
+  const loadSlots = async (showLoading = true): Promise<boolean> => {
     if (showLoading) setLoading(true);
     setMessage("");
     try {
@@ -62,13 +59,14 @@ export default function IndividualniTreninziPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (response.status === 401) {
-        setRequiresLogin(true);
-        return;
+        router.replace("/prijava?next=%2Findividualni-treninzi");
+        return false;
       }
       if (!response.ok)
         throw new Error(data.error || "Greška pri učitavanju termina");
       setSlots(data.slots || []);
       setMemberAccess(data.member || null);
+      return true;
     } catch (error) {
       setMessageIsError(true);
       setMessage(
@@ -76,6 +74,7 @@ export default function IndividualniTreninziPage() {
           ? error.message
           : "Greška pri učitavanju termina",
       );
+      return true;
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -85,21 +84,31 @@ export default function IndividualniTreninziPage() {
     let active = true;
 
     const initialize = async () => {
-      let shouldLoadMemberView = true;
       try {
+        const sessionResponse = await fetch("/api/auth/session", {
+          cache: "no-store",
+        });
+        const sessionData = await sessionResponse.json().catch(() => ({ user: null }));
+        if (!sessionData.user) {
+          router.replace("/prijava?next=%2Findividualni-treninzi");
+          return;
+        }
+
         const response = await fetch("/api/auth/check-admin", {
           cache: "no-store",
         });
         const data = await response.json().catch(() => ({ isAdmin: false }));
         if (data.isAdmin) {
-          shouldLoadMemberView = false;
           router.replace("/admin/individualni-treninzi");
           return;
         }
-      } finally {
-        if (active && shouldLoadMemberView) {
-          setCheckingRole(false);
+
+        const canShowMemberView = await loadSlots();
+        if (active && canShowMemberView) setCheckingRole(false);
+      } catch {
+        if (active) {
           await loadSlots();
+          setCheckingRole(false);
         }
       }
     };
@@ -208,14 +217,11 @@ export default function IndividualniTreninziPage() {
           </p>
         </div>
 
-        {!requiresLogin && (
-          <div className="mb-6">
-            <PushNotificationButton />
-          </div>
-        )}
+        <div className="mb-6">
+          <PushNotificationButton />
+        </div>
 
-        {!requiresLogin &&
-          memberAccess &&
+        {memberAccess &&
           (!memberAccess.individualPaid ||
             !memberAccess.individualExpiryDate) && (
             <div className="mb-6 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4 text-yellow-200">
@@ -224,24 +230,7 @@ export default function IndividualniTreninziPage() {
             </div>
           )}
 
-        {requiresLogin && (
-          <div className="rounded-lg border border-primary/20 bg-card/40 p-8 text-center">
-            <LogIn className="mx-auto mb-4 h-10 w-10 text-primary" />
-            <h2 className="text-2xl font-semibold text-foreground">
-              Prijavite se da vidite termine
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Posle prijave sistem proverava vaše pravo na individualni trening.
-            </p>
-            <Link href="/prijava">
-              <Button className="mt-6 bg-primary text-primary-foreground">
-                Prijavi se
-              </Button>
-            </Link>
-          </div>
-        )}
-
-        {!requiresLogin && message && (
+        {message && (
           <div
             className={`mb-6 flex items-center gap-3 rounded-lg border p-4 ${
               messageIsError
@@ -258,20 +247,20 @@ export default function IndividualniTreninziPage() {
           </div>
         )}
 
-        {!requiresLogin && loading && (
+        {loading && (
           <div className="flex items-center justify-center py-16 text-muted-foreground">
             <Loader2 className="mr-3 h-6 w-6 animate-spin" /> Učitavanje
             termina...
           </div>
         )}
 
-        {!requiresLogin && !loading && slots.length === 0 && (
+        {!loading && slots.length === 0 && (
           <div className="rounded-lg border border-primary/20 bg-card/40 p-10 text-center text-muted-foreground">
             Trenutno nema slobodnih individualnih termina.
           </div>
         )}
 
-        {!requiresLogin && !loading && slots.length > 0 && (
+        {!loading && slots.length > 0 && (
           <div className="grid gap-4 md:grid-cols-2">
             {slots.map((slot) => {
               const hasBooking = Boolean(slot.my_booking_id);

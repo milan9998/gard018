@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { checkAdminAuth } from "@/lib/auth-helpers";
 import { sql } from "@/lib/db-singleton";
 import { getSessionUser } from "@/lib/session-helpers";
-import { belgradeDateToday } from "@/lib/membership-status";
-import { isDateWithinInclusivePeriod } from "@/lib/individual-training-access";
+import {
+  dateOnlyFromValue,
+  getIndividualSlotPeriodRelation,
+} from "@/lib/individual-training-access";
 import {
   formatTrainingDate,
   sendPushToAdmins,
@@ -105,28 +107,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const today = belgradeDateToday();
-    const startDate = String(member.individual_start_date).slice(0, 10);
-    const expiryDate = String(member.individual_expiry_date).slice(0, 10);
-
-    if (today < startDate) {
-      return NextResponse.json(
-        {
-          error: `Period individualnog treninga još nije počeo. Važi od ${startDate.split("-").reverse().join(".")}.`,
-        },
-        { status: 403 },
-      );
-    }
-
-    if (today > expiryDate) {
-      return NextResponse.json(
-        {
-          error:
-            "Period individualnog treninga je istekao. Potrebno je da obnovite uplatu kod admina.",
-        },
-        { status: 403 },
-      );
-    }
+    const startDate = dateOnlyFromValue(member.individual_start_date);
+    const expiryDate = dateOnlyFromValue(member.individual_expiry_date);
 
     const slotResult = await sql`
       SELECT
@@ -152,13 +134,22 @@ export async function POST(request: Request) {
       );
     }
 
-    if (
-      !isDateWithinInclusivePeriod(
-        slotResult[0].starts_at,
-        startDate,
-        expiryDate,
-      )
-    ) {
+    const periodRelation = getIndividualSlotPeriodRelation(
+      slotResult[0].starts_at,
+      startDate,
+      expiryDate,
+    );
+
+    if (periodRelation === "before") {
+      return NextResponse.json(
+        {
+          error: `Ovaj termin je pre početka vašeg perioda. Individualni trening važi od ${startDate.split("-").reverse().join(".")}.`,
+        },
+        { status: 403 },
+      );
+    }
+
+    if (periodRelation !== "inside") {
       return NextResponse.json(
         {
           error:
@@ -255,7 +246,11 @@ export async function DELETE(request: Request) {
         AND m.email = ${user.email}
         AND b.status IN ('pending', 'booked')
         AND s.starts_at >= ((CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Belgrade')::date + INTERVAL '1 day')
-      RETURNING b.id
+      RETURNING
+        b.id,
+        m.first_name,
+        m.last_name,
+        s.starts_at
     `;
 
     if (result.length === 0)
@@ -263,6 +258,13 @@ export async function DELETE(request: Request) {
         { error: "Otkazivanje nije moguće posle ponoći dana pre treninga." },
         { status: 409 },
       );
+    await sendPushToAdmins({
+      title: "Klijent je otkazao individualni trening",
+      body: `${result[0].first_name} ${result[0].last_name} je otkazao termin ${formatTrainingDate(result[0].starts_at)}.`,
+      url: "/admin/individualni-treninzi",
+      tag: `individual-cancellation-${result[0].id}`,
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[GARD018] Individual booking cancellation failed:", error);

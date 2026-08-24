@@ -63,7 +63,7 @@ export function Programs() {
 
   return (
     <>
-      <section id="programi" className="py-24 relative">
+      <section id="programi" className="premium-section motion-section py-24 relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <p className="text-primary uppercase tracking-[0.3em] text-sm mb-4 font-medium">Programi</p>
@@ -74,6 +74,9 @@ export function Programs() {
               IZABERI SVOJ PUT
             </h2>
             <div className="w-20 h-1 bg-primary mx-auto" />
+            <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Od prvog treninga do ozbiljnog napretka — izaberi disciplinu koja odgovara tvom tempu, ciljevima i energiji.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-6xl mx-auto">
@@ -149,7 +152,9 @@ export function Programs() {
                 <Phone className="w-5 h-5 text-primary" />
                 <div>
                   <p className="text-sm text-muted-foreground">Telefon</p>
-                  <p className="text-foreground">069 010 5213</p>
+                  <a href="tel:+381690105213" className="text-foreground transition-colors hover:text-primary">
+                    +381 69 010 5213
+                  </a>
                 </div>
               </div>
               <div className="flex items-center gap-3">

@@ -8,8 +8,15 @@ import { sql } from "@/lib/db-singleton";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Vesti | GARD 018",
-  description: "Najnovije vesti, obaveštenja i dešavanja iz GARD 018 kluba.",
+  title: "Vesti i obaveštenja | GARD 018 Niš",
+  description: "Najnovije vesti, obaveštenja, rezultati i dešavanja iz GARD 018 boks i kik boks kluba u Nišu.",
+  alternates: { canonical: "https://gard018.com/vesti" },
+  openGraph: {
+    title: "Vesti i obaveštenja | GARD 018 Niš",
+    description: "Pratite najnovija dešavanja iz GARD 018 kluba.",
+    url: "https://gard018.com/vesti",
+    type: "website",
+  },
 };
 
 export default async function NewsPage() {

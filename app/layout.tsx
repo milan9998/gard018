@@ -3,12 +3,17 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "@/components/ui/toaster"
+import { ScrollMotion } from "@/components/scroll-motion"
 
 export const metadata: Metadata = {
   title: "GARD 018 | Boks Klub Niš | Kik Boks | Muay Thai | Borilački Klub",
   description:
     "GARD 018 - Profesionalni boks i kik boks klub u Nišu. Treninzi boksa, kik boksa, muay thai-a, tajlandskog boksa. Grupni i individualni treninzi za dece, omladinu i odrasle. Licencirani treneri.",
-  generator: "v0.app",
+  applicationName: "GARD 018",
+  authors: [{ name: "GARD 018", url: "https://gard018.com" }],
+  creator: "GARD 018",
+  publisher: "GARD 018",
+  formatDetection: { telephone: true, address: true, email: true },
   keywords: [
     "gard018",
     "gard 018",
@@ -91,6 +96,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <div className="gradient-bg" />
         {children}
+        <ScrollMotion />
         <Toaster />
         <Analytics />
       </body>

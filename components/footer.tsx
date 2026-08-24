@@ -4,14 +4,18 @@ import { Instagram, Facebook, Youtube, Phone, Mail, MapPin } from "lucide-react"
 
 export function Footer() {
   return (
-    <footer className="bg-card border-t border-border">
+    <footer className="premium-footer motion-section bg-card border-t border-border">
       <div className="container mx-auto px-4 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
           <div>
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-10 h-10 bg-primary rounded-sm flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">G</span>
-              </div>
+              <Image
+                src="/gard018-logo-transparent.png"
+                alt="GARD 018 logo"
+                width={48}
+                height={48}
+                className="h-16 w-16 object-contain"
+              />
               <div className="flex flex-col">
                 <span className="font-bold text-lg tracking-tight text-foreground">GARD 018</span>
                 <span className="text-[10px] text-muted-foreground tracking-widest uppercase">Niš, Srbija</span>
@@ -22,7 +26,10 @@ export function Footer() {
             </p>
             <div className="flex gap-4">
               <a
-                href="#"
+                href="https://www.instagram.com/borilacki.klub.gard.018/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="GARD 018 Instagram"
                 className="w-10 h-10 bg-secondary hover:bg-primary rounded-sm flex items-center justify-center transition-colors"
               >
                 <Instagram className="w-5 h-5 text-foreground" />
@@ -103,7 +110,9 @@ export function Footer() {
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-primary shrink-0" />
-                <span className="text-muted-foreground text-sm">069 010 5213</span>
+                <a href="tel:+381690105213" className="text-muted-foreground text-sm transition-colors hover:text-primary">
+                  +381 69 010 5213
+                </a>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-primary shrink-0" />

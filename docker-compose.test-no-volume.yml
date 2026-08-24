@@ -1,0 +1,5 @@
+# Privremeni test: PostgreSQL se pokreće bez named volume-a.
+# Koristi se samo uz projekat gard018-test i ne menja produkcioni/local compose.
+services:
+  postgres:
+    volumes: !reset []
