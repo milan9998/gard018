@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Calendar,
   CalendarDays,
+  ClipboardList,
   Home,
   MessageSquare,
   Newspaper,
@@ -19,6 +20,7 @@ import { InstallAppButton } from "@/components/install-app-button";
 const links = [
   { href: "/admin", label: "Članovi", icon: Users },
   { href: "/admin/qr-skener", label: "QR skener", icon: ScanLine },
+  { href: "/admin/broj-treninga", label: "Broj treninga", icon: ClipboardList },
   { href: "/admin/messages", label: "Poruke", icon: MessageSquare },
   { href: "/admin/vesti", label: "Vesti", icon: Newspaper },
   {

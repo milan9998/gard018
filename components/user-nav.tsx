@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LogOut, Settings, UserIcon, Users, Shield, MessageSquare, Calendar, CalendarDays, AlertCircle, QrCode, ScanLine, Menu as MenuIcon, Home, Newspaper } from "lucide-react"
+import { LogOut, Settings, UserIcon, Users, Shield, MessageSquare, Calendar, CalendarDays, AlertCircle, QrCode, ScanLine, Menu as MenuIcon, Home, Newspaper, CreditCard } from "lucide-react"
 
 type User = {
   email: string
@@ -173,6 +173,10 @@ export function UserNav({ showAdminShortcut = true }: { showAdminShortcut?: bool
               <QrCode className="mr-2 h-4 w-4" />
               Moj QR kod
             </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/clanarina") }>
+              <CreditCard className="mr-2 h-4 w-4" />
+              Članarina
+            </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/individualni-treninzi") }>
               <Calendar className="mr-2 h-4 w-4" />
               Individualni treninzi
@@ -218,6 +222,12 @@ export function UserNav({ showAdminShortcut = true }: { showAdminShortcut?: bool
           Podešavanja
         </DropdownMenuItem>
         {!isAdmin && (
+          <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/clanarina")}>
+            <CreditCard className="mr-2 h-4 w-4" />
+            Članarina
+          </DropdownMenuItem>
+        )}
+        {!isAdmin && (
           <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/individualni-treninzi")}>
             <Calendar className="mr-2 h-4 w-4" />
             Individualni treninzi
@@ -250,35 +260,6 @@ export function UserNav({ showAdminShortcut = true }: { showAdminShortcut?: bool
               <Shield className="mr-2 h-4 w-4" />
               Upravljaj adminima
             </DropdownMenuItem>
-          </>
-        )}
-        {membership && (
-          <>
-            <DropdownMenuSeparator />
-            <button type="button" onClick={() => router.push("/moj-qr")} className="w-full rounded-md px-2 py-3 text-left transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-              <div className="flex items-start gap-2 text-xs">
-                <QrCode className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="font-medium text-white">Članarina</p>
-                  {membership.membership_configured === false ? (
-                    <p className="text-zinc-400 font-semibold mt-1">Nije podešena</p>
-                  ) : isExpired ? (
-                    <p className="text-red-500 font-semibold mt-1">Istekla!</p>
-                  ) : isExpiringSoon ? (
-                    <p className="text-yellow-500 font-semibold mt-1">
-                      Ističe za {daysLeft} {daysLeft === 1 ? "dan" : "dana"}
-                    </p>
-                  ) : daysLeft !== null ? (
-                    <p className="text-zinc-400 mt-1">
-                      Ističe {new Date(membership.expiry_date).toLocaleDateString("sr-RS")}
-                    </p>
-                  ) : (
-                    <p className="text-zinc-400 mt-1">Nema podataka</p>
-                  )}
-                  <p className="mt-2 font-semibold text-primary">Prikaži moj QR kod</p>
-                </div>
-              </div>
-            </button>
           </>
         )}
         <DropdownMenuSeparator />

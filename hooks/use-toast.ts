@@ -6,7 +6,8 @@ import * as React from 'react'
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast'
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_REMOVE_DELAY = 300
+const TOAST_DURATION = 3000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -160,6 +161,13 @@ function toast({ ...props }: Toast) {
       },
     },
   })
+
+  // Radix pauses its timer while the viewport is focused or touched. Keep a
+  // separate deadline so a mobile notification cannot cover the page forever.
+  const duration = props.duration ?? TOAST_DURATION
+  if (Number.isFinite(duration) && duration > 0) {
+    setTimeout(dismiss, duration)
+  }
 
   return {
     id: id,

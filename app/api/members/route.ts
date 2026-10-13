@@ -30,6 +30,8 @@ export async function GET() {
       SELECT id, first_name, last_name, email, start_date, expiry_date, status, membership_type,
              membership_configured,
              individual_training_paid, individual_start_date, individual_expiry_date, created_at,
+             (SELECT MIN(t.attended_on) FROM training_attendances t
+              WHERE t.member_id = members.id AND t.was_overdue AND t.settled_at IS NULL) AS pending_override_date,
              EXISTS (
                SELECT 1 FROM admins a WHERE LOWER(a.email) = LOWER(members.email)
              ) AS is_admin

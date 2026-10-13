@@ -6,7 +6,7 @@ import { belgradeDateToday, isValidDateOnly } from "@/lib/membership-status"
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const resolvedParams = await params
-    const memberId = Number.parseInt(resolvedParams.id)
+    const memberId = Number(resolvedParams.id)
 
     console.log("[v0] PATCH /api/members/[id] starting:", {
       memberId,
@@ -20,13 +20,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: auth.error || "Nemate pristup" }, { status: auth.isAuthenticated ? 403 : 401 })
     }
 
-    if (isNaN(memberId)) {
+    if (!Number.isSafeInteger(memberId) || memberId <= 0) {
       console.log("[v0] Invalid member ID:", resolvedParams.id)
       return NextResponse.json({ error: "Nevažeći ID člana" }, { status: 400 })
     }
 
     const body = await request.json()
-    const { expiry_date } = body
+    const { start_date, expiry_date } = body
 
     console.log("[v0] Request body parsed:", { expiry_date, fullBody: body })
 
@@ -39,6 +39,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       console.log("[v0] Invalid date format:", expiry_date)
       return NextResponse.json({ error: "Nevažeći datum isteka" }, { status: 400 })
     }
+    if (start_date !== undefined && (typeof start_date !== "string" || !isValidDateOnly(start_date))) {
+      return NextResponse.json({ error: "Nevažeći datum početka" }, { status: 400 })
+    }
+    if (start_date && start_date > expiry_date) {
+      return NextResponse.json({ error: "Početak članarine mora biti pre datuma isteka" }, { status: 400 })
+    }
 
     // Datum isteka je poslednji dan kada član sme da trenira.
     const today = belgradeDateToday()
@@ -47,13 +53,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     console.log("[v0] Calculated new status:", { newStatus, willUpdate: true })
 
     const result = await sql`
-      UPDATE members
-      SET expiry_date = ${expiry_date}, 
-          membership_configured = TRUE,
-          status = ${newStatus}, 
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${memberId}
-      RETURNING id, first_name, last_name, email, expiry_date, status
+      WITH updated AS (
+        UPDATE members
+        SET start_date = COALESCE(${start_date || null}::date, start_date),
+            expiry_date = ${expiry_date},
+            membership_configured = TRUE,
+            status = ${newStatus},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${memberId}
+        RETURNING id, first_name, last_name, email, start_date, expiry_date, status
+      )
+      SELECT updated.* FROM updated
     `
 
     console.log("[v0] Update query result:", {

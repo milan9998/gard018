@@ -23,6 +23,10 @@ pnpm dev
 
 Lokalni `.env.local` nije deo Git repozitorijuma.
 
+Za evidenciju treninga potrebna je migracija `025-create-training-attendance.sql`.
+Docker aplikacija pokreće migracije pri startu. Kod lokalnog `pnpm dev` rada,
+pokrenuti `pnpm migrate` sa podešenim `DATABASE_URL` pre prvog skeniranja.
+
 ## Produkciona arhitektura
 
 - `caddy`: HTTPS za `gard018.com` i `www.gard018.com`, plus reverse proxy

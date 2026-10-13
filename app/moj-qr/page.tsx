@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, Loader2, QrCode, X, XCircle } from "lucide-react"
+import { Loader2, QrCode, X, XCircle } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 
 import { UserPageNavigation } from "@/components/user-page-navigation"
@@ -14,15 +14,7 @@ type QrData = {
     id: number
     firstName: string
     lastName: string
-    expiryDate: string | null
-    allowed: boolean
-    membershipConfigured: boolean
   }
-}
-
-function formatDate(value: string) {
-  const [year, month, day] = value.split("-")
-  return year && month && day ? `${day}.${month}.${year}.` : value
 }
 
 export default function MojQrPage() {
@@ -148,22 +140,6 @@ export default function MojQrPage() {
                   className="block h-full w-full"
                 />
               </button>
-
-              <div className={`mt-5 rounded-2xl border p-4 ${data.member.allowed ? "border-green-500/40 bg-green-500/10" : "border-red-500/40 bg-red-500/10"}`}>
-                <p className={`flex items-center justify-center gap-2 text-base font-bold ${data.member.allowed ? "text-green-300" : "text-red-300"}`}>
-                  {data.member.allowed ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
-                  {data.member.allowed
-                    ? "Članarina važi"
-                    : data.member.membershipConfigured
-                      ? "Članarina je istekla"
-                      : "Članarina nije podešena"}
-                </p>
-                <p className="mt-1 text-sm text-foreground">
-                  {data.member.membershipConfigured
-                    ? `Važi do ${formatDate(data.member.expiryDate || "")}`
-                    : "Admin još nije uneo datum važenja članarine."}
-                </p>
-              </div>
 
               <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
                 QR samo identifikuje tvoj nalog. Trenerov skener uvek proverava trenutno stanje članarine u bazi.

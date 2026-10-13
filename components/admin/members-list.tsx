@@ -33,6 +33,7 @@ interface Member {
   email: string;
   start_date: string;
   expiry_date: string;
+  pending_override_date?: string | null;
   status: string;
   membership_configured?: boolean;
   membership_type?: string;
@@ -111,8 +112,10 @@ export function MembersList({
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [newStartDate, setNewStartDate] = useState<string>("");
   const [newExpiryDate, setNewExpiryDate] = useState<string>("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [settlingDebtId, setSettlingDebtId] = useState<number | null>(null);
   const [extendingId, setExtendingId] = useState<number | null>(null);
   const [updatingIndividualId, setUpdatingIndividualId] = useState<
     number | null
@@ -236,11 +239,26 @@ export function MembersList({
 
   const handleOpenEditModal = (member: Member) => {
     setEditingMember(member);
+    setNewStartDate(String(member.start_date).slice(0, 10));
     setNewExpiryDate(String(member.expiry_date).slice(0, 10));
   };
 
+  const handleSettleDebt = async (member: Member) => {
+    if (!confirm(`Potvrdi da je ${member.first_name} ${member.last_name} izmirio/la dugovanje?`)) return;
+    setSettlingDebtId(member.id);
+    try {
+      const response = await fetch(`/api/members/${member.id}/settle-debt`, { method: "POST" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Greška pri izmirivanju dugovanja");
+      toast({ title: "Dugovanje izmireno", description: data.message });
+      await refreshMembers();
+    } catch (error) {
+      toast({ title: "Greška", description: error instanceof Error ? error.message : "Greška pri izmirivanju dugovanja", variant: "destructive" });
+    } finally { setSettlingDebtId(null); }
+  };
+
   const handleUpdateExpiryDate = async () => {
-    if (!editingMember || !newExpiryDate) {
+    if (!editingMember || !newStartDate || !newExpiryDate) {
       console.log("[v0] Cannot update - missing data:", {
         hasEditingMember: !!editingMember,
         hasNewExpiryDate: !!newExpiryDate,
@@ -248,10 +266,10 @@ export function MembersList({
       return;
     }
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(newExpiryDate)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newStartDate) || !/^\d{4}-\d{2}-\d{2}$/.test(newExpiryDate) || newStartDate > newExpiryDate) {
       toast({
         title: "Greška",
-        description: "Izaberite važeći datum u kalendaru.",
+        description: "Izaberite ispravan period članarine.",
         variant: "destructive",
       });
       return;
@@ -261,7 +279,7 @@ export function MembersList({
 
     setIsUpdating(true);
 
-    const requestData = { expiry_date: expiryDateISO };
+    const requestData = { start_date: newStartDate, expiry_date: expiryDateISO };
     const url = `/api/members/${editingMember.id}`;
 
     console.log("[v0] ===== STARTING UPDATE REQUEST =====");
@@ -311,7 +329,7 @@ export function MembersList({
         console.log("[v0] ===== UPDATE SUCCESSFUL =====");
         toast({
           title: "Uspešno ažurirano",
-          description: `Datum isteka za ${editingMember.first_name} ${editingMember.last_name} je uspešno ažuriran na ${formatDate(expiryDateISO)}.`,
+          description: `Članarina za ${editingMember.first_name} ${editingMember.last_name} važi od ${formatDate(newStartDate)} do ${formatDate(expiryDateISO)}.`,
         });
         setEditingMember(null);
 
@@ -527,7 +545,9 @@ export function MembersList({
   const handleExtendMembership = async (member: Member) => {
     if (
       !confirm(
-        `Produžiti članarinu za ${member.first_name} ${member.last_name} za još jedan mesec?`,
+        member.pending_override_date
+          ? `Prvi dozvoljeni trening posle isteka je ${formatDate(member.pending_override_date)}. Produženje će važiti od tog datuma jedan mesec. Nastaviti?`
+          : `Produžiti članarinu za ${member.first_name} ${member.last_name} za još jedan mesec?`,
       )
     )
       return;
@@ -612,10 +632,10 @@ export function MembersList({
                       {member.first_name} {member.last_name}
                     </h3>
                     <span
-                      className={`flex items-center gap-1 text-sm ${getStatusColor(getDisplayStatus(member.expiry_date, member.membership_configured !== false))}`}
+                      className={`flex items-center gap-1 text-sm ${member.pending_override_date ? "text-yellow-400" : getStatusColor(getDisplayStatus(member.expiry_date, member.membership_configured !== false))}`}
                     >
-                      {getStatusIcon(getDisplayStatus(member.expiry_date, member.membership_configured !== false))}
-                      {getStatusLabel(getDisplayStatus(member.expiry_date, member.membership_configured !== false))}
+                      {member.pending_override_date ? <AlertCircle className="h-5 w-5" /> : getStatusIcon(getDisplayStatus(member.expiry_date, member.membership_configured !== false))}
+                      {member.pending_override_date ? "Dugovanje" : getStatusLabel(getDisplayStatus(member.expiry_date, member.membership_configured !== false))}
                     </span>
                   </div>
 
@@ -695,10 +715,16 @@ export function MembersList({
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => handleOpenEditModal(member)}
-                      title={member.membership_configured === false ? "Podesi članarinu" : "Izmeni datum isteka"}
+                      title={member.membership_configured === false ? "Podesi članarinu" : "Izmeni period članarine"}
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>
+                    {member.pending_override_date && (
+                      <Button variant="outline" size="sm" className="h-8 border-yellow-500/40 text-yellow-300"
+                        disabled={settlingDebtId === member.id} onClick={() => void handleSettleDebt(member)}>
+                        {settlingDebtId === member.id ? "Čuvanje..." : "Izmiri dugovanje klijenta"}
+                      </Button>
+                    )}
                     {member.membership_configured !== false && <Button
                       variant="outline"
                       size="sm"
@@ -710,15 +736,21 @@ export function MembersList({
                       <Plus className="mr-1.5 h-4 w-4" />
                       {extendingId === member.id ? "Produžujem..." : "Produži"}
                     </Button>}
-                    {member.membership_configured !== false && <Button
+                    <Button
                       variant="outline"
                       size="sm"
                       className="h-8 border-green-500/30 text-green-400 hover:bg-green-500/10"
                       onClick={() => handleOpenRenewal(member)}
                     >
                       Obnova
-                    </Button>}
+                    </Button>
                   </div>
+
+                  {member.pending_override_date && (
+                    <p className="text-sm font-medium text-red-300">
+                      Prvi dozvoljeni trening po isteku: {formatDate(member.pending_override_date)}
+                    </p>
+                  )}
 
                   {isExpiringSoon(member.expiry_date) &&
                     getDisplayStatus(member.expiry_date) === "active" && (
@@ -786,18 +818,26 @@ export function MembersList({
       >
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Izmeni datum isteka</DialogTitle>
+            <DialogTitle>Izmeni period članarine</DialogTitle>
             <DialogDescription>
-              Izaberite novi datum isteka članarine za{" "}
+              Izaberite od kada do kada važi članarina za{" "}
               {editingMember?.first_name} {editingMember?.last_name}
+              {editingMember?.pending_override_date && " Ručna izmena datuma ne uklanja dugovanje. Uplatu potvrdite opcijom Izmiri dugovanje klijenta."}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4">
+          <div className="grid gap-4 py-4 sm:grid-cols-2">
+            <DatePickerField
+              id="start-date"
+              label="Važi od"
+              value={newStartDate}
+              onChange={setNewStartDate}
+            />
             <DatePickerField
               id="expiry-date"
-              label="Novi datum isteka"
+              label="Važi do"
               value={newExpiryDate}
+              min={newStartDate}
               onChange={setNewExpiryDate}
             />
           </div>
@@ -812,7 +852,7 @@ export function MembersList({
             </Button>
             <Button
               onClick={handleUpdateExpiryDate}
-              disabled={isUpdating || !newExpiryDate}
+              disabled={isUpdating || !newStartDate || !newExpiryDate || newStartDate > newExpiryDate}
             >
               {isUpdating ? "Čuvanje..." : "Sačuvaj"}
             </Button>
@@ -829,21 +869,28 @@ export function MembersList({
             <DialogTitle>Obnova članarine</DialogTitle>
             <DialogDescription>
               Izaberite datum kada je {renewingMember?.first_name}{" "}
-              {renewingMember?.last_name} platio/la članarinu. Sistem automatski
-              računa važenje do istog datuma sledećeg meseca.
+              {renewingMember?.last_name} platio/la članarinu. Ako postoje dozvoljeni treninzi po isteku,
+              novi period počinje od prvog takvog treninga.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <DatePickerField
               id="membership-renewal-date"
-              label="Datum uplate / početka"
+              label="Datum uplate"
               value={renewalDate}
               onChange={setRenewalDate}
             />
             {renewalDate && (
-              <p className="text-sm text-muted-foreground">
-                Važi do: {formatDate(addCalendarMonth(renewalDate))}
-              </p>
+              <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+                {renewingMember?.pending_override_date && (
+                  <p>Prvi dozvoljeni trening po isteku: {formatDate(renewingMember.pending_override_date)}</p>
+                )}
+                <p>Važi od: {formatDate(renewingMember?.pending_override_date || renewalDate)}</p>
+                <p>Važi do: {formatDate(addCalendarMonth(renewingMember?.pending_override_date || renewalDate))}</p>
+                {renewingMember?.pending_override_date && addCalendarMonth(renewingMember.pending_override_date) < todayISO() && (
+                  <p className="font-semibold text-red-300">Ovaj period je već istekao. Po potrebi ručno podesite datume članarine.</p>
+                )}
+              </div>
             )}
           </div>
           <DialogFooter>
